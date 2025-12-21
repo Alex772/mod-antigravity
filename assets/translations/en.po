@@ -1,0 +1,59 @@
+# English translations for Antigravity Mod
+# Format: msgid "key" msgstr "translation"
+
+msgid "ANTIGRAVITY.TITLE"
+msgstr "Antigravity Multiplayer"
+
+msgid "ANTIGRAVITY.MENU.MULTIPLAYER"
+msgstr "Multiplayer"
+
+msgid "ANTIGRAVITY.MENU.CREATE_SESSION"
+msgstr "Create Session"
+
+msgid "ANTIGRAVITY.MENU.JOIN_SESSION"
+msgstr "Join Session"
+
+msgid "ANTIGRAVITY.MENU.SESSION_CODE"
+msgstr "Session Code"
+
+msgid "ANTIGRAVITY.MENU.ENTER_CODE"
+msgstr "Enter session code..."
+
+msgid "ANTIGRAVITY.MENU.CONNECT"
+msgstr "Connect"
+
+msgid "ANTIGRAVITY.MENU.DISCONNECT"
+msgstr "Disconnect"
+
+msgid "ANTIGRAVITY.MENU.START_GAME"
+msgstr "Start Game"
+
+msgid "ANTIGRAVITY.STATUS.CONNECTING"
+msgstr "Connecting..."
+
+msgid "ANTIGRAVITY.STATUS.CONNECTED"
+msgstr "Connected"
+
+msgid "ANTIGRAVITY.STATUS.DISCONNECTED"
+msgstr "Disconnected"
+
+msgid "ANTIGRAVITY.STATUS.SYNCING"
+msgstr "Syncing..."
+
+msgid "ANTIGRAVITY.LOBBY.PLAYERS"
+msgstr "Players"
+
+msgid "ANTIGRAVITY.LOBBY.WAITING"
+msgstr "Waiting for players..."
+
+msgid "ANTIGRAVITY.CHAT.PLACEHOLDER"
+msgstr "Type a message..."
+
+msgid "ANTIGRAVITY.ERROR.CONNECTION_FAILED"
+msgstr "Connection failed"
+
+msgid "ANTIGRAVITY.ERROR.SESSION_FULL"
+msgstr "Session is full"
+
+msgid "ANTIGRAVITY.ERROR.INVALID_CODE"
+msgstr "Invalid session code"

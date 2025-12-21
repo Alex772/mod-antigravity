@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  INSTRUÇÕES:
+  1. Copie este arquivo para "local.props" (sem .example)
+  2. Ajuste os caminhos abaixo para sua máquina
+  3. Não commite o arquivo local.props (está no .gitignore)
+-->
+<Project>
+  <PropertyGroup>
+    <!-- Caminho da instalação do ONI (onde está OxygenNotIncluded.exe) -->
+    <ONIPath>C:\Program Files (x86)\Steam\steamapps\common\OxygenNotIncluded</ONIPath>
+    
+    <!-- Caminho das DLLs gerenciadas do jogo -->
+    <ONIManagedPath>$(ONIPath)\OxygenNotIncluded_Data\Managed</ONIManagedPath>
+    
+    <!-- Pasta de mods para desenvolvimento (Dev permite reload rápido) -->
+    <ONIModsDevPath>$(USERPROFILE)\Documents\Klei\OxygenNotIncluded\mods\Dev</ONIModsDevPath>
+    
+    <!-- Pasta de mods local -->
+    <ONIModsLocalPath>$(USERPROFILE)\Documents\Klei\OxygenNotIncluded\mods\Local</ONIModsLocalPath>
+  </PropertyGroup>
+</Project>

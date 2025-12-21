@@ -1,0 +1,60 @@
+# Portuguese (Brazil) translations for Antigravity Mod
+# Traduções em Português Brasileiro para o Mod Antigravity
+# Format: msgid "key" msgstr "translation"
+
+msgid "ANTIGRAVITY.TITLE"
+msgstr "Antigravity Multiplayer"
+
+msgid "ANTIGRAVITY.MENU.MULTIPLAYER"
+msgstr "Multiplayer"
+
+msgid "ANTIGRAVITY.MENU.CREATE_SESSION"
+msgstr "Criar Sessão"
+
+msgid "ANTIGRAVITY.MENU.JOIN_SESSION"
+msgstr "Entrar em Sessão"
+
+msgid "ANTIGRAVITY.MENU.SESSION_CODE"
+msgstr "Código da Sessão"
+
+msgid "ANTIGRAVITY.MENU.ENTER_CODE"
+msgstr "Digite o código da sessão..."
+
+msgid "ANTIGRAVITY.MENU.CONNECT"
+msgstr "Conectar"
+
+msgid "ANTIGRAVITY.MENU.DISCONNECT"
+msgstr "Desconectar"
+
+msgid "ANTIGRAVITY.MENU.START_GAME"
+msgstr "Iniciar Jogo"
+
+msgid "ANTIGRAVITY.STATUS.CONNECTING"
+msgstr "Conectando..."
+
+msgid "ANTIGRAVITY.STATUS.CONNECTED"
+msgstr "Conectado"
+
+msgid "ANTIGRAVITY.STATUS.DISCONNECTED"
+msgstr "Desconectado"
+
+msgid "ANTIGRAVITY.STATUS.SYNCING"
+msgstr "Sincronizando..."
+
+msgid "ANTIGRAVITY.LOBBY.PLAYERS"
+msgstr "Jogadores"
+
+msgid "ANTIGRAVITY.LOBBY.WAITING"
+msgstr "Aguardando jogadores..."
+
+msgid "ANTIGRAVITY.CHAT.PLACEHOLDER"
+msgstr "Digite uma mensagem..."
+
+msgid "ANTIGRAVITY.ERROR.CONNECTION_FAILED"
+msgstr "Falha na conexão"
+
+msgid "ANTIGRAVITY.ERROR.SESSION_FULL"
+msgstr "Sessão está cheia"
+
+msgid "ANTIGRAVITY.ERROR.INVALID_CODE"
+msgstr "Código de sessão inválido"

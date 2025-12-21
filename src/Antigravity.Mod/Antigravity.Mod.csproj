@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Antigravity</RootNamespace>
+    <AssemblyName>Antigravity</AssemblyName>
+    <Description>Main entry point for Antigravity Multiplayer Mod</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Antigravity.Core\Antigravity.Core.csproj" />
+    <ProjectReference Include="..\Antigravity.Patches\Antigravity.Patches.csproj" />
+    <ProjectReference Include="..\Antigravity.Client\Antigravity.Client.csproj" />
+    <ProjectReference Include="..\Antigravity.Server\Antigravity.Server.csproj" />
+  </ItemGroup>
+
+</Project>

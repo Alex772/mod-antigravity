@@ -1,0 +1,22 @@
+{
+  "network": {
+    "defaultPort": 7777,
+    "maxPlayers": 4,
+    "connectionTimeout": 10000,
+    "enableUPnP": true
+  },
+  "sync": {
+    "hardSyncInterval": 600,
+    "softSyncInterval": 30,
+    "debugSync": false
+  },
+  "ui": {
+    "showPlayerCursors": true,
+    "showConnectionStatus": true,
+    "enableChat": true
+  },
+  "debug": {
+    "verboseLogging": false,
+    "logPackets": false
+  }
+}

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Antigravity.Server</RootNamespace>
+    <AssemblyName>Antigravity.Server</AssemblyName>
+    <Description>Server-side code for Antigravity Multiplayer Mod</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Antigravity.Core\Antigravity.Core.csproj" />
+  </ItemGroup>
+
+</Project>

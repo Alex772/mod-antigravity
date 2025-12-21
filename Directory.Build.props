@@ -1,0 +1,93 @@
+<!-- Propriedades compartilhadas por todos os projetos -->
+<Project>
+  <!-- Importa configurações locais se existirem -->
+  <Import Project="$(MSBuildThisFileDirectory)local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
+  
+  <PropertyGroup>
+    <!-- Versão do .NET Framework -->
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    
+    <!-- Configurações de build -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>true</Deterministic>
+    
+    <!-- Desabilitar referências implícitas para ter controle total -->
+    <DisableImplicitFrameworkReferences>false</DisableImplicitFrameworkReferences>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    
+    <!-- Informações do Assembly -->
+    <Version>0.1.0</Version>
+    <Authors>Antigravity Team</Authors>
+    <Company>Antigravity</Company>
+    <Product>Antigravity Multiplayer Mod</Product>
+    <Copyright>Copyright © 2024 Antigravity Team</Copyright>
+    
+    <!-- Output path -->
+    <OutputPath>$(MSBuildThisFileDirectory)bin\$(Configuration)\</OutputPath>
+    
+    <!-- Paths do ONI (podem ser sobrescritos por local.props) -->
+    <ONIPath Condition="'$(ONIPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\OxygenNotIncluded</ONIPath>
+    <ONIManagedPath Condition="'$(ONIManagedPath)' == ''">$(ONIPath)\OxygenNotIncluded_Data\Managed</ONIManagedPath>
+  </PropertyGroup>
+  
+  <!-- Referências comuns do ONI -->
+  <ItemGroup Label="ONI References">
+    <Reference Include="0Harmony">
+      <HintPath>$(ONIManagedPath)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ONIManagedPath)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ONIManagedPath)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>$(ONIManagedPath)\com.rlabrecque.steamworks.net.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ONIManagedPath)\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ONIManagedPath)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ONIManagedPath)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ONIManagedPath)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ONIManagedPath)\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ONIManagedPath)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ONIManagedPath)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ONIManagedPath)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  
+  <!-- Referência explícita ao System para delegates -->
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+</Project>

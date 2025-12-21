@@ -1,0 +1,64 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ist/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+packages/
+*.nupkg
+.nuget/
+
+# Build
+*.dll
+*.exe
+*.pdb
+!lib/**/*.dll
+
+# Local configuration (contains paths)
+local.props
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+*.idea/
+*.swp
+*.swo
+*~
+
+# Test results
+TestResults/
+*.trx
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Temp
+*.tmp
+*.temp
+*.bak
+
+# Logs
+*.log
+output_log.txt
+
+# Distribution (built by CI)
+dist/*.zip
+dist/*.dll

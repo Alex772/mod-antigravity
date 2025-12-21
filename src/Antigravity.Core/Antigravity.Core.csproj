@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Antigravity.Core</RootNamespace>
+    <AssemblyName>Antigravity.Core</AssemblyName>
+    <Description>Core library for Antigravity Multiplayer Mod</Description>
+  </PropertyGroup>
+
+  <!-- NuGet Packages -->
+  <ItemGroup>
+    <PackageReference Include="LiteNetLib" Version="1.2.0" />
+    <!-- Using Newtonsoft.Json (already included in ONI) for serialization instead of MessagePack -->
+  </ItemGroup>
+
+</Project>
+

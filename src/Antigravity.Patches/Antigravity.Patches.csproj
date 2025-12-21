@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Antigravity.Patches</RootNamespace>
+    <AssemblyName>Antigravity.Patches</AssemblyName>
+    <Description>Harmony patches for Antigravity Multiplayer Mod</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Antigravity.Core\Antigravity.Core.csproj" />
+    <ProjectReference Include="..\Antigravity.Client\Antigravity.Client.csproj" />
+  </ItemGroup>
+
+</Project>
