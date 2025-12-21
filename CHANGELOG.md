@@ -8,6 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Steam P2P Networking** - Replaced IP-based connection with Steam lobby system
+  - No need for IP addresses or port forwarding
+  - NAT traversal handled automatically by Steam
+- **Multiplayer Menu Button** - Added "MULTIPLAYER" button to main menu
+- **Lobby System** - Full lobby UI with:
+  - HOST GAME - Create Steam lobby
+  - JOIN GAME - Join via lobby code
+  - COPY CODE - One-click copy lobby code to clipboard
+  - Player list with names
+- **Start Game Flow** - Host can select game mode:
+  - NEW COLONY option
+  - LOAD SAVE option
+  - Back to lobby
+- **Waiting State** - Clients see "Waiting for host..." message
+- **Deploy Scripts** - Added `deploy.bat` and `create_package.bat`
+- **Documentation** - Added MULTIPLAYER_DESIGN.md, TESTING_GUIDE.md, DEPLOY_MANUAL.md
+
+### Changed
+- Replaced MessagePack with Newtonsoft.Json for serialization (ONI compatibility)
+- Updated MainMenuPatch to use reflection for accessing private ONI methods
+- Improved UI layout and styling
+
+### Fixed
+- Fixed lobby screen not appearing after multiple opens
+- Fixed UI state not resetting when reopening lobby
+- Fixed waiting text visibility control
+
+## [0.1.0-alpha] - 2024-12-21
+
+### Added
 - Initial project structure
 - Core networking layer using LiteNetLib
 - Command dispatcher system
@@ -15,22 +45,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic client and server managers
 - Build and deploy scripts
 - Unit test framework
+- Steam P2P lobby system (working)
+- Multiplayer UI in main menu
 
-### Changed
-- N/A
-
-### Fixed
-- N/A
-
-## [0.1.0-alpha] - TBD
-
-### Added
-- First alpha release
-- Basic multiplayer lobby system
-- Shared colony control
-- Command synchronization for basic tools (dig, build, mop)
-- Player cursor display
-- In-game chat
+### Status
+- ✅ Steam lobby creation working
+- ✅ Lobby code sharing working
+- ✅ Start game UI flow working
+- ⏳ Game synchronization (Phase 2)
+- ⏳ Command sync (Phase 3)
 
 ---
 
@@ -38,4 +61,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Status |
 |---------|------|--------|
-| 0.1.0-alpha | TBD | Planned |
+| 0.1.0-alpha | 2024-12-21 | In Development |

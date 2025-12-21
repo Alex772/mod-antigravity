@@ -10,41 +10,43 @@ Este documento detalha o plano de implementação fase a fase para o mod multipl
 
 **Objetivo**: Múltiplos jogadores controlam a mesma colônia simultaneamente.
 
-### Sprint 1: Fundação (Semanas 1-2)
+### Sprint 1: Fundação (Semanas 1-2) ✅ CONCLUÍDO
 
 #### 1.1 Configuração do Ambiente
 - [x] Estrutura de projeto criada
 - [x] Solution do Visual Studio configurada
 - [x] Scripts de build e deploy
-- [ ] Configurar `local.props` com caminhos do ONI
-- [ ] Testar compilação com referências do jogo
-- [ ] Verificar mod carrega no ONI
+- [x] Configurar `local.props` com caminhos do ONI
+- [x] Testar compilação com referências do jogo
+- [x] Verificar mod carrega no ONI
 
 #### 1.2 Networking Básico
-- [ ] Testar LiteNetLib standalone
-- [ ] Implementar conexão host/client básica
-- [ ] Adicionar tratamento de erros de rede
-- [ ] Testar em rede local (mesmo PC, 2 instâncias)
+- [x] Implementar Steam P2P (substituiu LiteNetLib para conexão)
+- [x] Implementar conexão host/client via Steam lobby
+- [x] Adicionar tratamento de erros de rede
+- [x] Testar criação/entrada de lobby
 
-**Entregável**: Mod carrega, host pode iniciar servidor, client pode conectar
+**Entregável**: ✅ Mod carrega, host pode criar lobby Steam, client pode conectar via código
 
 ---
 
-### Sprint 2: UI de Multiplayer (Semanas 3-4)
+### Sprint 2: UI de Multiplayer (Semanas 3-4) ✅ CONCLUÍDO
 
 #### 2.1 Tela de Lobby
-- [ ] Patch do menu principal para adicionar botão "Multiplayer"
-- [ ] Criar tela de lobby (Criar/Entrar sessão)
-- [ ] Campo para código de sessão
-- [ ] Lista de jogadores conectados
-- [ ] Botão de iniciar jogo (apenas host)
+- [x] Patch do menu principal para adicionar botão "Multiplayer"
+- [x] Criar tela de lobby (Criar/Entrar sessão)
+- [x] Campo para código de sessão (Steam lobby ID)
+- [x] Lista de jogadores conectados
+- [x] Botão COPY CODE para copiar código
+- [x] Botão de iniciar jogo (apenas host)
+- [x] Tela de seleção (New Colony / Load Save)
 
 #### 2.2 Indicadores In-Game
 - [ ] Status de conexão (HUD)
 - [ ] Contador de jogadores online
 - [ ] Indicador de sincronização
 
-**Entregável**: UI funcional para criar/entrar em sessões
+**Entregável**: ✅ UI funcional para criar/entrar em sessões via Steam
 
 ---
 
