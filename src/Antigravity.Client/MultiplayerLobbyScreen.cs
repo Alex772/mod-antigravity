@@ -59,17 +59,31 @@ namespace Antigravity.Client
                 _instance.RefreshUI();
             }
 
+            // Ensure the updater is running
+            MultiplayerUpdater.EnsureExists();
+
             Debug.Log("[Antigravity] Multiplayer lobby opened");
         }
 
         /// <summary>
         /// Hide the multiplayer lobby screen.
         /// </summary>
-        public static void Hide()
+        public static new void Hide()
         {
             if (_screenObject != null)
             {
                 _screenObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// Update status text from external code.
+        /// </summary>
+        public static void UpdateStatus(string message, Color color)
+        {
+            if (_instance != null)
+            {
+                _instance.SetStatus(message, color);
             }
         }
 

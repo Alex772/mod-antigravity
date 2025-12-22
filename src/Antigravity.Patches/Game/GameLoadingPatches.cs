@@ -121,12 +121,15 @@ namespace Antigravity.Patches.Game
                     byte[] saveData = File.ReadAllBytes(filename);
                     Debug.Log($"[Antigravity] Read save data: {saveData.Length} bytes");
 
-                    // Mark that we're syncing in the state
-                    MultiplayerState.TotalPlayers = SteamNetworkManager.ConnectedPlayers.Count;
+                    // Count connected players (excluding self)
+                    int connectedCount = SteamNetworkManager.ConnectedPlayers.Count;
+                    Debug.Log($"[Antigravity] Connected players count: {connectedCount}");
+                    MultiplayerState.TotalPlayers = connectedCount + 1; // +1 for host
 
-                    // Only sync if there are other players
-                    if (MultiplayerState.TotalPlayers > 1)
+                    // Sync if there are any other players connected
+                    if (connectedCount > 0)
                     {
+                        Debug.Log($"[Antigravity] Syncing to {connectedCount} connected players...");
                         // Start the game session sync
                         GameSession.HostStartGame(saveData, colonyName, true);
                     }

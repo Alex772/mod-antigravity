@@ -53,24 +53,58 @@ namespace Antigravity.Core.Network
 
         /// <summary>
         /// Deserialize bytes into a NetworkMessage.
+        /// Returns null if data is invalid or not in expected format.
         /// </summary>
         public static NetworkMessage Deserialize(byte[] data)
         {
+            // Minimum message size: 1 (type) + 8 (steamId) + 8 (tick) + 4 (payloadLength) = 21 bytes
+            const int MinMessageSize = 21;
+            
+            if (data == null || data.Length < MinMessageSize)
+            {
+                // Data too small, likely not our message format - silently ignore
+                return null;
+            }
+
             try
             {
                 using (var ms = new MemoryStream(data))
                 using (var reader = new BinaryReader(ms))
                 {
+                    byte typeValue = reader.ReadByte();
+                    
+                    // Validate message type is in valid range
+                    if (!Enum.IsDefined(typeof(MessageType), typeValue))
+                    {
+                        // Unknown message type - not our format
+                        return null;
+                    }
+
                     var message = new NetworkMessage
                     {
-                        Type = (MessageType)reader.ReadByte(),
+                        Type = (MessageType)typeValue,
                         SenderSteamId = reader.ReadUInt64(),
                         Tick = reader.ReadInt64()
                     };
 
                     int payloadLength = reader.ReadInt32();
+                    
+                    // Sanity check payload length
+                    if (payloadLength < 0 || payloadLength > 50 * 1024 * 1024) // Max 50MB
+                    {
+                        Debug.LogWarning($"[Antigravity] Invalid payload length: {payloadLength}");
+                        return null;
+                    }
+
                     if (payloadLength > 0)
                     {
+                        // Check if there's enough data remaining
+                        long remaining = ms.Length - ms.Position;
+                        if (remaining < payloadLength)
+                        {
+                            Debug.LogWarning($"[Antigravity] Not enough data for payload: need {payloadLength}, have {remaining}");
+                            return null;
+                        }
                         message.Payload = reader.ReadBytes(payloadLength);
                     }
 
@@ -79,7 +113,11 @@ namespace Antigravity.Core.Network
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Antigravity] Failed to deserialize message: {ex.Message}");
+                // Only log if it's an actual error, not just invalid format
+                if (data.Length >= MinMessageSize)
+                {
+                    Debug.LogWarning($"[Antigravity] Failed to deserialize message ({data.Length} bytes): {ex.Message}");
+                }
                 return null;
             }
         }
