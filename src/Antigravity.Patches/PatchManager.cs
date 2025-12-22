@@ -57,9 +57,37 @@ namespace Antigravity.Patches
 
         private static void ApplyGamePatches(Harmony harmony)
         {
-            // Game patches will be applied here
-            // harmony.PatchAll(typeof(BuildToolPatch));
-            // harmony.PatchAll(typeof(DigToolPatch));
+            // Patch SaveLoader.Load to detect when a save is loaded
+            var saveLoaderLoadMethod = AccessTools.Method(typeof(SaveLoader), "Load", new System.Type[] { typeof(string) });
+            if (saveLoaderLoadMethod != null)
+            {
+                harmony.Patch(
+                    saveLoaderLoadMethod,
+                    postfix: new HarmonyMethod(typeof(Game.SaveLoader_Load_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SaveLoader.Load patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] SaveLoader.Load method not found - save sync may not work.");
+            }
+
+            // Patch Game.OnSpawn to detect when world is ready
+            var gameOnSpawnMethod = AccessTools.Method(typeof(global::Game), "OnSpawn");
+            if (gameOnSpawnMethod != null)
+            {
+                harmony.Patch(
+                    gameOnSpawnMethod,
+                    postfix: new HarmonyMethod(typeof(Game.Game_OnSpawn_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Game.OnSpawn patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Game.OnSpawn method not found.");
+            }
+            
+            UnityEngine.Debug.Log("[Antigravity] Game patches applied.");
         }
 
         private static void ApplySimulationPatches(Harmony harmony)

@@ -55,6 +55,10 @@
       <HintPath>$(ONIManagedPath)\Unity.TextMeshPro.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(ONIManagedPath)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(ONIManagedPath)\UnityEngine.dll</HintPath>
       <Private>false</Private>

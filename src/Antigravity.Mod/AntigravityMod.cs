@@ -66,6 +66,12 @@ namespace Antigravity
                 // Initialize sync engine
                 Core.Sync.SyncEngine.Initialize();
                 
+                // Initialize game session manager
+                Core.Network.GameSession.Initialize();
+                
+                // Apply game patches
+                Patches.PatchManager.ApplyPatches(HarmonyInstance);
+                
                 Logger.Log("Core systems initialized successfully.");
             }
             catch (System.Exception ex)

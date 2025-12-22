@@ -106,8 +106,8 @@ namespace Antigravity.Patches.UI
 
     /// <summary>
     /// Patches the main menu to add a Multiplayer button.
+    /// Note: This patch is applied manually by PatchManager, not via attribute.
     /// </summary>
-    [HarmonyPatch(typeof(MainMenu), "OnSpawn")]
     public static class MainMenuPatch
     {
         /// <summary>
