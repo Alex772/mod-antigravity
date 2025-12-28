@@ -1,5 +1,6 @@
 using UnityEngine;
 using Antigravity.Core.Network;
+using Antigravity.Core.Commands;
 using System.IO;
 
 namespace Antigravity.Client
@@ -27,6 +28,10 @@ namespace Antigravity.Client
             {
                 _updaterObject = new GameObject("AntigravityMultiplayerUpdater");
                 _instance = _updaterObject.AddComponent<MultiplayerUpdater>();
+                
+                // Add RemoteCursorManager for cursor sync
+                _updaterObject.AddComponent<RemoteCursorManager>();
+                
                 DontDestroyOnLoad(_updaterObject);
                 Debug.Log("[Antigravity] MultiplayerUpdater created.");
             }
@@ -46,6 +51,9 @@ namespace Antigravity.Client
             GameSession.OnWorldDataReceived += OnWorldDataReceived;
             GameSession.OnGameStarted += OnGameStarted;
 
+            // Initialize command manager for syncing commands
+            CommandManager.Initialize();
+
             Debug.Log("[Antigravity] MultiplayerUpdater initialized.");
         }
 
@@ -62,6 +70,12 @@ namespace Antigravity.Client
             if (SteamNetworkManager.IsConnected)
             {
                 SteamNetworkManager.Update();
+            }
+
+            // Process any pending commands from other players
+            if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded)
+            {
+                CommandManager.ProcessPendingCommands();
             }
         }
 

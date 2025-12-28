@@ -88,6 +88,151 @@ namespace Antigravity.Patches
             }
             
             UnityEngine.Debug.Log("[Antigravity] Game patches applied.");
+
+            // Apply sync patches
+            ApplySpeedSyncPatches(harmony);
+            ApplyDigSyncPatches(harmony);
+            ApplyCancelSyncPatches(harmony);
+            ApplyBuildSyncPatches(harmony);
+            ApplyDeconstructSyncPatches(harmony);
+        }
+
+        private static void ApplySpeedSyncPatches(Harmony harmony)
+        {
+            // Try to find Pause method - may have different signature
+            var pauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Pause", new System.Type[] { typeof(bool) });
+            if (pauseMethod == null)
+            {
+                // Try without parameters
+                pauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Pause");
+                UnityEngine.Debug.Log("[Antigravity] Trying Pause() without parameters...");
+            }
+            
+            if (pauseMethod != null)
+            {
+                harmony.Patch(
+                    pauseMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.SpeedSyncPatches.SpeedControlScreen_Pause_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SpeedControlScreen.Pause patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] SpeedControlScreen.Pause method NOT FOUND! Pause sync will not work.");
+            }
+
+            // Patch SpeedControlScreen.Unpause
+            var unpauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Unpause", new System.Type[] { typeof(bool) });
+            if (unpauseMethod == null)
+            {
+                unpauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Unpause");
+            }
+            
+            if (unpauseMethod != null)
+            {
+                harmony.Patch(
+                    unpauseMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.SpeedSyncPatches.SpeedControlScreen_Unpause_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SpeedControlScreen.Unpause patch applied.");
+            }
+
+            // Patch SpeedControlScreen.SetSpeed
+            var setSpeedMethod = AccessTools.Method(typeof(SpeedControlScreen), "SetSpeed", new System.Type[] { typeof(int) });
+            if (setSpeedMethod != null)
+            {
+                harmony.Patch(
+                    setSpeedMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.SpeedSyncPatches.SpeedControlScreen_SetSpeed_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SpeedControlScreen.SetSpeed patch applied.");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Speed sync patches applied.");
+        }
+
+        private static void ApplyDigSyncPatches(Harmony harmony)
+        {
+            // Patch DigTool.OnDragTool
+            var onDragToolMethod = AccessTools.Method(typeof(DigTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.DigSyncPatches.DigTool_OnDragTool_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] DigTool.OnDragTool patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] DigTool.OnDragTool method NOT FOUND!");
+            }
+
+            // Patch DragTool.OnLeftClickUp to detect when drag ends
+            var onLeftClickUpMethod = AccessTools.Method(typeof(DragTool), "OnLeftClickUp");
+            if (onLeftClickUpMethod != null)
+            {
+                harmony.Patch(
+                    onLeftClickUpMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.DigSyncPatches.DragTool_OnLeftClickUp_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] DragTool.OnLeftClickUp patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] DragTool.OnLeftClickUp method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Dig sync patches applied.");
+        }
+
+        private static void ApplyCancelSyncPatches(Harmony harmony)
+        {
+            // Patch CancelTool.OnDragTool  
+            var onDragToolMethod = AccessTools.Method(typeof(CancelTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.CancelSyncPatches.CancelTool_OnDragTool_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] CancelTool.OnDragTool patch applied.");
+            }
+
+            // Note: OnLeftClickUp is patched via DragTool already for Dig
+            // The CancelTool postfix handler checks if instance is CancelTool
+            UnityEngine.Debug.Log("[Antigravity] Cancel sync patches applied.");
+        }
+
+        private static void ApplyBuildSyncPatches(Harmony harmony)
+        {
+            // Patch BuildTool.OnDragTool
+            var onDragToolMethod = AccessTools.Method(typeof(BuildTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildSyncPatches.BuildTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+
+            // Patch DragTool.OnLeftClickUp for build (already patched, but will call BuildTool handler)
+            UnityEngine.Debug.Log("[Antigravity] Build sync patches applied.");
+        }
+
+        private static void ApplyDeconstructSyncPatches(Harmony harmony)
+        {
+            // Patch DeconstructTool.OnDragTool
+            var onDragToolMethod = AccessTools.Method(typeof(DeconstructTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.DeconstructSyncPatches.DeconstructTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Deconstruct sync patches applied.");
         }
 
         private static void ApplySimulationPatches(Harmony harmony)

@@ -20,6 +20,7 @@ namespace Antigravity.Client
         private InputField _codeInput;
         private Text _lobbyCodeText;
         private Text _playersListText;
+        private Text _playersCountText;
         private GameObject _hostSection;
         private GameObject _joinSection;
         private GameObject _lobbySection;
@@ -180,13 +181,31 @@ namespace Antigravity.Client
             var copyBtnImg = copyBtn.GetComponent<Image>();
             copyBtnImg.color = new Color(0.3f, 0.6f, 0.3f, 1f);
 
-            // Players list
-            var playersLabel = CreateText("PlayersLabel", _lobbySection.transform, "Players in lobby:", 16);
-            SetAnchoredPosition(playersLabel, 0, -10);
+            // === Players Section with background panel ===
+            var playersPanel = CreatePanel("PlayersPanel", _lobbySection.transform);
+            var playersPanelImg = playersPanel.AddComponent<Image>();
+            playersPanelImg.color = new Color(0.1f, 0.1f, 0.15f, 0.8f);
+            SetAnchoredPosition(playersPanel, 0, -40);
+            SetSize(playersPanel, 400, 100);
 
-            var playersObj = CreateText("PlayersList", _lobbySection.transform, "", 18);
-            SetAnchoredPosition(playersObj, 0, -60);
+            // Players count header
+            var playersLabel = CreateText("PlayersLabel", playersPanel.transform, "👥 Players (0/4)", 18);
+            var playersLabelRect = playersLabel.GetComponent<RectTransform>();
+            playersLabelRect.anchorMin = new Vector2(0.5f, 1);
+            playersLabelRect.anchorMax = new Vector2(0.5f, 1);
+            playersLabelRect.anchoredPosition = new Vector2(0, -15);
+            playersLabel.GetComponent<Text>().color = new Color(0.8f, 0.85f, 1f, 1f);
+            _playersCountText = playersLabel.GetComponent<Text>();
+
+            // Players list scroll area
+            var playersObj = CreateText("PlayersList", playersPanel.transform, "", 16);
+            var playersRect = playersObj.GetComponent<RectTransform>();
+            playersRect.anchorMin = new Vector2(0, 0);
+            playersRect.anchorMax = new Vector2(1, 1);
+            playersRect.offsetMin = new Vector2(20, 10);
+            playersRect.offsetMax = new Vector2(-20, -35);
             _playersListText = playersObj.GetComponent<Text>();
+            _playersListText.alignment = TextAnchor.UpperLeft;
 
             // START GAME button (Host only - will be hidden for clients)
             _startGameButton = CreateButton("StartGameButton", _lobbySection.transform, "🚀  START GAME", OnStartGameClick);
@@ -584,13 +603,15 @@ namespace Antigravity.Client
             if (_playersListText == null) return;
 
             var players = new System.Text.StringBuilder();
+            int playerCount = 0;
 
             // Add host
             if (SteamNetworkManager.IsConnected)
             {
                 string hostName = SteamNetworkManager.GetPlayerName(SteamNetworkManager.HostSteamId);
                 bool isMe = SteamNetworkManager.HostSteamId == SteamNetworkManager.LocalSteamId;
-                players.AppendLine($"👑 {hostName}{(isMe ? " (You)" : "")} [Host]");
+                players.AppendLine($"👑 {hostName}{(isMe ? " (You)" : "")} <color=#FFD700>[HOST]</color>");
+                playerCount++;
             }
 
             // Add other players
@@ -601,10 +622,18 @@ namespace Antigravity.Client
                     string name = SteamNetworkManager.GetPlayerName(player);
                     bool isMe = player == SteamNetworkManager.LocalSteamId;
                     players.AppendLine($"👤 {name}{(isMe ? " (You)" : "")}");
+                    playerCount++;
                 }
             }
 
             _playersListText.text = players.ToString();
+            _playersListText.supportRichText = true;
+
+            // Update player count header
+            if (_playersCountText != null)
+            {
+                _playersCountText.text = $"👥 Players ({playerCount}/4)";
+            }
         }
 
         private void SetStatus(string message, Color color)

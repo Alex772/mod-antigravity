@@ -190,4 +190,36 @@ namespace Antigravity.Core.Network
         /// </summary>
         public long Timestamp { get; set; }
     }
+
+    /// <summary>
+    /// Cursor position message for showing other player's cursor.
+    /// </summary>
+    [Serializable]
+    public class CursorPositionMessage
+    {
+        /// <summary>
+        /// Steam ID of the player.
+        /// </summary>
+        public ulong SteamId { get; set; }
+
+        /// <summary>
+        /// Player display name.
+        /// </summary>
+        public string PlayerName { get; set; }
+
+        /// <summary>
+        /// World X position.
+        /// </summary>
+        public float WorldX { get; set; }
+
+        /// <summary>
+        /// World Y position.
+        /// </summary>
+        public float WorldY { get; set; }
+
+        /// <summary>
+        /// Cell ID (grid cell position).
+        /// </summary>
+        public int CellId { get; set; }
+    }
 }

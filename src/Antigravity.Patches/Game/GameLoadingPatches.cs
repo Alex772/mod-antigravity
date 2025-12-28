@@ -166,11 +166,13 @@ namespace Antigravity.Patches.Game
                 // The game world is now fully loaded and ready
                 Debug.Log("[Antigravity] Multiplayer game world ready!");
                 
-                // If host, pause the game until all clients are synced
-                if (MultiplayerState.IsHost)
+                // ALWAYS pause the game when it starts in multiplayer
+                // This ensures both host and client start in the same state
+                Debug.Log("[Antigravity] Pausing game on start for multiplayer sync...");
+                if (SpeedControlScreen.Instance != null)
                 {
-                    Debug.Log("[Antigravity] Host: Pausing game for sync...");
-                    // SpeedControlScreen.Instance can be used to control speed
+                    SpeedControlScreen.Instance.Pause(false);
+                    Debug.Log("[Antigravity] Game paused on start.");
                 }
             }
         }

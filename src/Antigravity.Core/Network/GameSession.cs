@@ -212,6 +212,10 @@ namespace Antigravity.Core.Network
                     HandleGameStart(message);
                     break;
 
+                case MessageType.CursorUpdate:
+                    HandleCursorUpdate(message);
+                    break;
+
                 default:
                     // Other message types handled elsewhere
                     break;
@@ -312,6 +316,33 @@ namespace Antigravity.Core.Network
             Debug.Log($"[Antigravity] Game start received! Tick: {data.StartTick}");
 
             StartGame();
+        }
+
+        private static void HandleCursorUpdate(NetworkMessage message)
+        {
+            var cursorData = MessageSerializer.DeserializePayload<CursorPositionMessage>(message.Payload);
+            if (cursorData == null) return;
+
+            // Forward to RemoteCursorManager (in client assembly)
+            // Using reflection since we can't directly reference the client assembly from core
+            try
+            {
+                var managerType = System.Type.GetType("Antigravity.Client.RemoteCursorManager, Antigravity.Client");
+                if (managerType != null)
+                {
+                    var instanceProperty = managerType.GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+                    var instance = instanceProperty?.GetValue(null);
+                    if (instance != null)
+                    {
+                        var method = managerType.GetMethod("OnCursorReceived");
+                        method?.Invoke(instance, new object[] { cursorData });
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[Antigravity] Cursor update handling failed: {ex.Message}");
+            }
         }
 
         private static void OnPlayerDisconnected(CSteamID player)
