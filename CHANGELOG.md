@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Utility Build Sync** - Wires, pipes, conduits sync correctly with proper connections
+  - New `UtilityBuildCommand` with path-based synchronization
+  - Two-step execution: register connections then place buildings
+  - Works for power wires, liquid/gas pipes, solid conduits, logic wires
+- **Tool Sync Commands** - Full synchronization for:
+  - Mop tool (`MopCommand`)
+  - Clear tool (`ClearCommand`)
+  - Harvest tool (`HarvestCommand`)
+  - Disinfect tool (`DisinfectCommand`)
+  - Capture tool (`CaptureCommand`)
+  - Prioritize tool (`BulkPriorityCommand`)
+- **Door State Sync** - Door open/close/auto states synchronize (`DoorStateCommand`)
+- **Storage Filter Sync** - Storage bin filters synchronize (`StorageFilterCommand`)
+- **Building Settings Sync** - Building settings panels synchronize
 - **Steam P2P Networking** - Replaced IP-based connection with Steam lobby system
   - No need for IP addresses or port forwarding
   - NAT traversal handled automatically by Steam
@@ -38,9 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved UI layout and styling
 
 ### Fixed
+- Fixed utility builds not syncing correctly (isolated segments)
 - Fixed lobby screen not appearing after multiple opens
 - Fixed UI state not resetting when reopening lobby
 - Fixed waiting text visibility control
+
 
 ## [0.1.0-alpha] - 2024-12-21
 
