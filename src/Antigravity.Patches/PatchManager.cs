@@ -94,7 +94,16 @@ namespace Antigravity.Patches
             ApplyDigSyncPatches(harmony);
             ApplyCancelSyncPatches(harmony);
             ApplyBuildSyncPatches(harmony);
+            ApplyUtilityBuildSyncPatches(harmony);
             ApplyDeconstructSyncPatches(harmony);
+            ApplyMopSyncPatches(harmony);
+            ApplyClearSyncPatches(harmony);
+            ApplyHarvestSyncPatches(harmony);
+            ApplyDisinfectSyncPatches(harmony);
+            ApplyCaptureSyncPatches(harmony);
+            ApplyPrioritizeSyncPatches(harmony);
+            ApplyDoorSyncPatches(harmony);
+            ApplyBuildingSettingsSyncPatches(harmony);
         }
 
         private static void ApplySpeedSyncPatches(Harmony harmony)
@@ -220,6 +229,26 @@ namespace Antigravity.Patches
             UnityEngine.Debug.Log("[Antigravity] Build sync patches applied.");
         }
 
+        private static void ApplyUtilityBuildSyncPatches(Harmony harmony)
+        {
+            // Patch BaseUtilityBuildTool.BuildPath for wires, pipes, logic wires
+            var buildPathMethod = AccessTools.Method(typeof(BaseUtilityBuildTool), "BuildPath");
+            if (buildPathMethod != null)
+            {
+                harmony.Patch(
+                    buildPathMethod,
+                    prefix: new HarmonyMethod(typeof(Commands.UtilityBuildSyncPatches.BaseUtilityBuildTool_BuildPath_Patch), "Prefix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] BaseUtilityBuildTool.BuildPath patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] BaseUtilityBuildTool.BuildPath method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Utility build sync patches applied.");
+        }
+
         private static void ApplyDeconstructSyncPatches(Harmony harmony)
         {
             // Patch DeconstructTool.OnDragTool
@@ -239,6 +268,165 @@ namespace Antigravity.Patches
         {
             // Simulation patches will be applied here
             // harmony.PatchAll(typeof(SimTickPatch));
+        }
+
+        private static void ApplyMopSyncPatches(Harmony harmony)
+        {
+            var onDragToolMethod = AccessTools.Method(typeof(MopTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.MopSyncPatches.MopTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Mop sync patches applied.");
+        }
+
+        private static void ApplyClearSyncPatches(Harmony harmony)
+        {
+            var onDragToolMethod = AccessTools.Method(typeof(ClearTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.ClearSyncPatches.ClearTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Clear sync patches applied.");
+        }
+
+        private static void ApplyHarvestSyncPatches(Harmony harmony)
+        {
+            var onDragToolMethod = AccessTools.Method(typeof(HarvestTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.HarvestSyncPatches.HarvestTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Harvest sync patches applied.");
+        }
+
+        private static void ApplyDisinfectSyncPatches(Harmony harmony)
+        {
+            var onDragToolMethod = AccessTools.Method(typeof(DisinfectTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.DisinfectSyncPatches.DisinfectTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Disinfect sync patches applied.");
+        }
+
+        private static void ApplyCaptureSyncPatches(Harmony harmony)
+        {
+            // CaptureTool uses OnDragComplete, not OnDragTool
+            var onDragCompleteMethod = AccessTools.Method(typeof(CaptureTool), "OnDragComplete", new System.Type[] { typeof(UnityEngine.Vector3), typeof(UnityEngine.Vector3) });
+            if (onDragCompleteMethod != null)
+            {
+                harmony.Patch(
+                    onDragCompleteMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.CaptureSyncPatches.CaptureTool_OnDragComplete_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Capture sync patches applied.");
+        }
+
+        private static void ApplyPrioritizeSyncPatches(Harmony harmony)
+        {
+            // PrioritizeTool inherits from FilteredDragTool
+            var onDragToolMethod = AccessTools.Method(typeof(PrioritizeTool), "OnDragTool", new System.Type[] { typeof(int), typeof(int) });
+            if (onDragToolMethod != null)
+            {
+                harmony.Patch(
+                    onDragToolMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.PrioritizeSyncPatches.PrioritizeTool_OnDragTool_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Prioritize sync patches applied.");
+        }
+
+        private static void ApplyDoorSyncPatches(Harmony harmony)
+        {
+            // Patch Door.QueueStateChange
+            var queueStateChangeMethod = AccessTools.Method(typeof(Door), "QueueStateChange", new System.Type[] { typeof(Door.ControlState) });
+            if (queueStateChangeMethod != null)
+            {
+                harmony.Patch(
+                    queueStateChangeMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.DoorSyncPatches.Door_QueueStateChange_Patch), "Postfix")
+                );
+            }
+            UnityEngine.Debug.Log("[Antigravity] Door sync patches applied.");
+        }
+
+        private static void ApplyBuildingSettingsSyncPatches(Harmony harmony)
+        {
+            // Patch Prioritizable.SetMasterPriority - for priority changes via UI sidebar
+            var setMasterPriorityMethod = AccessTools.Method(typeof(Prioritizable), "SetMasterPriority", new System.Type[] { typeof(PrioritySetting) });
+            if (setMasterPriorityMethod != null)
+            {
+                harmony.Patch(
+                    setMasterPriorityMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.Prioritizable_SetMasterPriority_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Prioritizable.SetMasterPriority patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Prioritizable.SetMasterPriority method NOT FOUND!");
+            }
+
+            // Patch Disinfectable.MarkForDisinfect - for disinfect via UI
+            var markForDisinfectMethod = AccessTools.Method(typeof(Disinfectable), "MarkForDisinfect", new System.Type[] { typeof(bool) });
+            if (markForDisinfectMethod != null)
+            {
+                harmony.Patch(
+                    markForDisinfectMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.Disinfectable_MarkForDisinfect_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Disinfectable.MarkForDisinfect patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Disinfectable.MarkForDisinfect method NOT FOUND!");
+            }
+
+            // Patch Disinfectable cancel - OnCancel is private, we need to patch CancelDisinfection
+            var cancelDisinfectionMethod = AccessTools.Method(typeof(Disinfectable), "CancelDisinfection");
+            if (cancelDisinfectionMethod != null)
+            {
+                harmony.Patch(
+                    cancelDisinfectionMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.Disinfectable_OnCancel_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Disinfectable.CancelDisinfection patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Disinfectable.CancelDisinfection method NOT FOUND!");
+            }
+
+            // Patch TreeFilterable.UpdateFilters - for storage filter changes via UI
+            var updateFiltersMethod = AccessTools.Method(typeof(TreeFilterable), "UpdateFilters", new System.Type[] { typeof(System.Collections.Generic.HashSet<Tag>) });
+            if (updateFiltersMethod != null)
+            {
+                harmony.Patch(
+                    updateFiltersMethod,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.TreeFilterable_UpdateFilters_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] TreeFilterable.UpdateFilters patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] TreeFilterable.UpdateFilters method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Building settings sync patches applied.");
         }
 
         /// <summary>

@@ -38,6 +38,32 @@ namespace Antigravity.Core.Commands
         // Save
         SaveGame = 70,
         
+        // Mop/Clean commands
+        Mop = 80,
+        Clear = 81,
+        
+        // Harvest commands
+        Harvest = 82,
+        CancelHarvest = 83,
+        
+        // Disinfect
+        Disinfect = 84,
+        
+        // Capture commands
+        Capture = 85,
+        CancelCapture = 86,
+        
+        // Bulk priority (PrioritizeTool)
+        SetBulkPriority = 87,
+        
+        // Building-level commands (via UI sidebar, not tools)
+        SetBuildingPriority = 88,      // Prioridade via aba de propriedades
+        ToggleBuildingDisinfect = 89,  // Toggle desinfecção via UI
+        SetStorageFilter = 90,          // Filtros de storage bin
+        
+        // Utility build (wires, pipes - uses path instead of single cell)
+        UtilityBuild = 91,
+        
         // Generic
         Custom = 100
     }
@@ -75,6 +101,20 @@ namespace Antigravity.Core.Commands
         public string FacadeId { get; set; }
 
         public BuildCommand() : base(GameCommandType.Build) { }
+    }
+
+    /// <summary>
+    /// Utility build command - for wires, pipes (sends entire path)
+    /// </summary>
+    [Serializable]
+    public class UtilityBuildCommand : GameCommand
+    {
+        public string BuildingDefId { get; set; }
+        public int[] PathCells { get; set; }
+        public string[] SelectedElements { get; set; }
+        public string FacadeId { get; set; }
+
+        public UtilityBuildCommand() : base(GameCommandType.UtilityBuild) { }
     }
 
     /// <summary>
@@ -118,7 +158,140 @@ namespace Antigravity.Core.Commands
     public class DeconstructCommand : GameCommand
     {
         public int[] Cells { get; set; }
+        
+        /// <summary>
+        /// Active filter layers (e.g., "WIRES", "BUILDINGS", "ALL").
+        /// Null or empty means ALL.
+        /// </summary>
+        public string[] ActiveFilterLayers { get; set; }
 
         public DeconstructCommand() : base(GameCommandType.Deconstruct) { }
+    }
+
+    /// <summary>
+    /// Mop command - for MopTool
+    /// </summary>
+    [Serializable]
+    public class MopCommand : GameCommand
+    {
+        public int[] Cells { get; set; }
+        public int Priority { get; set; }
+
+        public MopCommand() : base(GameCommandType.Mop) { }
+    }
+
+    /// <summary>
+    /// Clear command - for ClearTool
+    /// </summary>
+    [Serializable]
+    public class ClearCommand : GameCommand
+    {
+        public int[] Cells { get; set; }
+        public int Priority { get; set; }
+
+        public ClearCommand() : base(GameCommandType.Clear) { }
+    }
+
+    /// <summary>
+    /// Harvest command - for HarvestTool
+    /// </summary>
+    [Serializable]
+    public class HarvestCommand : GameCommand
+    {
+        public int[] Cells { get; set; }
+        public bool HarvestWhenReady { get; set; }
+        public int Priority { get; set; }
+
+        public HarvestCommand() : base(GameCommandType.Harvest) { }
+    }
+
+    /// <summary>
+    /// Disinfect command - for DisinfectTool
+    /// </summary>
+    [Serializable]
+    public class DisinfectCommand : GameCommand
+    {
+        public int[] Cells { get; set; }
+
+        public DisinfectCommand() : base(GameCommandType.Disinfect) { }
+    }
+
+    /// <summary>
+    /// Capture command - for CaptureTool (uses area, not cells)
+    /// </summary>
+    [Serializable]
+    public class CaptureCommand : GameCommand
+    {
+        public float MinX { get; set; }
+        public float MinY { get; set; }
+        public float MaxX { get; set; }
+        public float MaxY { get; set; }
+        public bool Mark { get; set; }
+        public int PriorityClass { get; set; }
+        public int PriorityValue { get; set; }
+
+        public CaptureCommand() : base(GameCommandType.Capture) { }
+    }
+
+    /// <summary>
+    /// Bulk priority command - for PrioritizeTool
+    /// </summary>
+    [Serializable]
+    public class BulkPriorityCommand : GameCommand
+    {
+        public int[] Cells { get; set; }
+        public int PriorityClass { get; set; }
+        public int PriorityValue { get; set; }
+
+        public BulkPriorityCommand() : base(GameCommandType.SetBulkPriority) { }
+    }
+
+    /// <summary>
+    /// Door state command - for Door control
+    /// </summary>
+    [Serializable]
+    public class DoorStateCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public int ControlState { get; set; } // 0=Auto, 1=Open, 2=Locked
+
+        public DoorStateCommand() : base(GameCommandType.SetDoorState) { }
+    }
+
+    /// <summary>
+    /// Building priority command - for priority changes via UI sidebar (not PrioritizeTool)
+    /// </summary>
+    [Serializable]
+    public class BuildingPriorityCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public int PriorityClass { get; set; }
+        public int PriorityValue { get; set; }
+
+        public BuildingPriorityCommand() : base(GameCommandType.SetBuildingPriority) { }
+    }
+
+    /// <summary>
+    /// Building disinfect command - for toggle disinfect via UI sidebar
+    /// </summary>
+    [Serializable]
+    public class BuildingDisinfectCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public bool MarkForDisinfect { get; set; }
+
+        public BuildingDisinfectCommand() : base(GameCommandType.ToggleBuildingDisinfect) { }
+    }
+
+    /// <summary>
+    /// Storage filter command - for filter changes via TreeFilterable UI
+    /// </summary>
+    [Serializable]
+    public class StorageFilterCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public string[] AcceptedTags { get; set; }
+
+        public StorageFilterCommand() : base(GameCommandType.SetStorageFilter) { }
     }
 }

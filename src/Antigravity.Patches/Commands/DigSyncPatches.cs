@@ -64,6 +64,26 @@ namespace Antigravity.Patches.Commands
                 {
                     DeconstructSyncPatches.SendDeconstructCells();
                 }
+                else if (__instance is MopTool)
+                {
+                    MopSyncPatches.SendMopCells();
+                }
+                else if (__instance is ClearTool)
+                {
+                    ClearSyncPatches.SendClearCells();
+                }
+                else if (__instance is HarvestTool)
+                {
+                    HarvestSyncPatches.SendHarvestCells();
+                }
+                else if (__instance is DisinfectTool)
+                {
+                    DisinfectSyncPatches.SendDisinfectCells();
+                }
+                else if (__instance is PrioritizeTool)
+                {
+                    PrioritizeSyncPatches.SendPriorityCells();
+                }
             }
         }
 

@@ -20,10 +20,21 @@ namespace Antigravity.Client
 
         // Remote cursor visuals
         private Dictionary<ulong, RemoteCursor> _remoteCursors = new Dictionary<ulong, RemoteCursor>();
+        private Dictionary<ulong, int> _playerColorIndex = new Dictionary<ulong, int>();
+        private int _nextColorIndex = 0;
 
-        // Colors for different players
-        private static readonly Color HOST_COLOR = new Color(1f, 0.85f, 0.2f, 0.9f); // Gold
-        private static readonly Color CLIENT_COLOR = new Color(0.3f, 0.8f, 1f, 0.9f); // Light blue
+        // Unique colors for each player (vibrant and distinct)
+        private static readonly Color[] PLAYER_COLORS = new Color[]
+        {
+            new Color(1f, 0.85f, 0.2f, 0.9f),   // Gold (Host)
+            new Color(0.3f, 0.8f, 1f, 0.9f),    // Sky Blue
+            new Color(0.4f, 1f, 0.4f, 0.9f),    // Lime Green
+            new Color(1f, 0.4f, 0.7f, 0.9f),    // Pink
+            new Color(0.8f, 0.5f, 1f, 0.9f),    // Purple
+            new Color(1f, 0.6f, 0.2f, 0.9f),    // Orange
+            new Color(0.2f, 1f, 0.9f, 0.9f),    // Cyan
+            new Color(1f, 0.4f, 0.4f, 0.9f),    // Red
+        };
 
         private class RemoteCursor
         {
@@ -160,9 +171,9 @@ namespace Antigravity.Client
             spriteRenderer.sprite = CreateCursorSprite();
             spriteRenderer.sortingOrder = 1000;
             
-            // Color based on if host or client
-            bool isHost = new CSteamID(steamId) == SteamNetworkManager.HostSteamId;
-            spriteRenderer.color = isHost ? HOST_COLOR : CLIENT_COLOR;
+            // Get unique color for this player
+            Color playerColor = GetPlayerColor(steamId);
+            spriteRenderer.color = playerColor;
             indicator.transform.localScale = Vector3.one * 0.5f;
 
             // Player name text
@@ -177,7 +188,7 @@ namespace Antigravity.Client
             textMesh.characterSize = 0.1f;
             textMesh.anchor = TextAnchor.LowerCenter;
             textMesh.alignment = TextAlignment.Center;
-            textMesh.color = isHost ? HOST_COLOR : CLIENT_COLOR;
+            textMesh.color = playerColor;
 
             var meshRenderer = nameObj.GetComponent<MeshRenderer>();
             meshRenderer.sortingOrder = 1001;
@@ -221,6 +232,28 @@ namespace Antigravity.Client
 
             tex.Apply();
             return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+        }
+
+        /// <summary>
+        /// Get unique color for a player. Host always gets gold (index 0).
+        /// </summary>
+        private Color GetPlayerColor(ulong steamId)
+        {
+            // Host always gets the first color (gold)
+            if (new CSteamID(steamId) == SteamNetworkManager.HostSteamId)
+            {
+                return PLAYER_COLORS[0];
+            }
+
+            // Assign color index if not already assigned
+            if (!_playerColorIndex.ContainsKey(steamId))
+            {
+                // Start from 1 since 0 is reserved for host
+                _nextColorIndex = (_nextColorIndex % (PLAYER_COLORS.Length - 1)) + 1;
+                _playerColorIndex[steamId] = _nextColorIndex;
+            }
+
+            return PLAYER_COLORS[_playerColorIndex[steamId]];
         }
 
         /// <summary>
