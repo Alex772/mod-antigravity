@@ -13,7 +13,8 @@ namespace Antigravity.Core.Sync
         private static DuplicantSyncManager _instance;
         public static DuplicantSyncManager Instance => _instance ?? (_instance = new DuplicantSyncManager());
 
-        private Dictionary<int, MinionIdentity> _trackedMinions = new Dictionary<int, MinionIdentity>();
+        // Use Duplicant NAME as key (consistent across Host/Client)
+        private Dictionary<string, MinionIdentity> _trackedMinions = new Dictionary<string, MinionIdentity>();
 
         private DuplicantSyncManager() { }
 
@@ -23,49 +24,63 @@ namespace Antigravity.Core.Sync
             _trackedMinions.Clear();
         }
 
+        /// <summary>
+        /// Get a unique, consistent identifier for a Duplicant.
+        /// Uses the Duplicant's name which is the same on Host and Client.
+        /// </summary>
+        public static string GetDuplicantKey(MinionIdentity minion)
+        {
+            if (minion == null) return null;
+            return minion.name; // Name is consistent across Host/Client
+        }
+
         public void RegisterMinion(MinionIdentity minion)
         {
             if (minion == null) return;
             
-            // We use instanceID as the unique identifier for now.
-            // In a real P2P scenario ensuring these match across clients is tricky directly via instanceID,
-            // but for now we assume loading the same save file might preserve some consistency, 
-            // OR we will need a better mapping strategy (e.g. tracking by creation index).
-            // For Phase 1/2 of sync, let's just track them.
-            
-            int id = minion.GetInstanceID();
-            if (!_trackedMinions.ContainsKey(id))
+            string key = GetDuplicantKey(minion);
+            if (string.IsNullOrEmpty(key)) return;
+
+            if (!_trackedMinions.ContainsKey(key))
             {
-                _trackedMinions[id] = minion;
-                Debug.Log($"[Antigravity] Tracked minion: {minion.name} (ID: {id})");
+                _trackedMinions[key] = minion;
+                Debug.Log($"[Antigravity] Tracked minion: {key}");
             }
         }
 
         public void UnregisterMinion(MinionIdentity minion)
         {
             if (minion == null) return;
-            int id = minion.GetInstanceID();
-            if (_trackedMinions.ContainsKey(id))
+            string key = GetDuplicantKey(minion);
+            if (!string.IsNullOrEmpty(key) && _trackedMinions.ContainsKey(key))
             {
-                _trackedMinions.Remove(id);
+                _trackedMinions.Remove(key);
             }
         }
 
-        public MinionIdentity GetMinion(int id)
+        public MinionIdentity GetMinion(string key)
         {
-            if (_trackedMinions.TryGetValue(id, out var minion))
+            if (string.IsNullOrEmpty(key)) return null;
+            if (_trackedMinions.TryGetValue(key, out var minion))
             {
                 return minion;
             }
             return null;
         }
 
+        // Legacy method for compatibility - converts int to string lookup
+        public MinionIdentity GetMinion(int legacyId)
+        {
+            Debug.LogWarning($"[Antigravity] GetMinion(int) called with {legacyId} - this is deprecated!");
+            return null;
+        }
+
         public void HandleChoreStart(ChoreStartCommand cmd)
         {
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null)
             {
-                Debug.LogWarning($"[Antigravity] ChoreStart: Minion {cmd.DuplicantId} not found!");
+                Debug.LogWarning($"[Antigravity] ChoreStart: Minion {cmd.DuplicantName} not found!");
                 return;
             }
 
@@ -201,7 +216,7 @@ namespace Antigravity.Core.Sync
 
         public void HandleChoreEnd(ChoreEndCommand cmd)
         {
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null) return;
 
             Debug.Log($"[Antigravity] Syncing ChoreEnd for {minion.name}");
@@ -209,7 +224,7 @@ namespace Antigravity.Core.Sync
 
         public void HandleNavigateTo(NavigateToCommand cmd)
         {
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null) return;
 
             Debug.Log($"[Antigravity] Syncing Navigation for {minion.name} -> {cmd.TargetCell}");
@@ -225,7 +240,7 @@ namespace Antigravity.Core.Sync
 
         public void ApplyFullState(DuplicantFullStateCommand cmd)
         {
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null) return;
 
             // Correct position
@@ -270,10 +285,10 @@ namespace Antigravity.Core.Sync
         /// </summary>
         public bool VerifyChecksum(DuplicantChecksumCommand cmd)
         {
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null)
             {
-                Debug.LogWarning($"[Antigravity] Checksum verification failed: Minion {cmd.DuplicantId} not found.");
+                Debug.LogWarning($"[Antigravity] Checksum verification failed: Minion {cmd.DuplicantName} not found.");
                 return false;
             }
 
@@ -282,7 +297,7 @@ namespace Antigravity.Core.Sync
             {
                 Debug.LogWarning($"[Antigravity] DESYNC detected for {minion.name}! Local={localChecksum}, Remote={cmd.Checksum}");
                 // Request full state sync
-                RequestFullStateSync(cmd.DuplicantId);
+                RequestFullStateSync(cmd.DuplicantName);
                 return false;
             }
 
@@ -312,7 +327,7 @@ namespace Antigravity.Core.Sync
 
                 var cmd = new DuplicantChecksumCommand
                 {
-                    DuplicantId = kvp.Key,
+                    DuplicantName = kvp.Key,
                     Checksum = CalculateChecksum(minion),
                     CurrentCell = Grid.PosToCell(minion.transform.position),
                     CurrentChore = choreId
@@ -325,18 +340,18 @@ namespace Antigravity.Core.Sync
         /// <summary>
         /// Request a full state sync for a specific Duplicant.
         /// </summary>
-        public void RequestFullStateSync(int duplicantId)
+        public void RequestFullStateSync(string duplicantName)
         {
-            Debug.Log($"[Antigravity] Requesting full state sync for Duplicant {duplicantId}");
+            Debug.Log($"[Antigravity] Requesting full state sync for Duplicant {duplicantName}");
             // TODO: Send request to host, host will respond with DuplicantFullStateCommand
         }
 
         /// <summary>
         /// [HOST] Send full state for a Duplicant when a desync is detected.
         /// </summary>
-        public void SendFullState(int duplicantId)
+        public void SendFullState(string duplicantName)
         {
-            MinionIdentity minion = GetMinion(duplicantId);
+            MinionIdentity minion = GetMinion(duplicantName);
             if (minion == null) return;
 
             Vector3 pos = minion.transform.position;
@@ -355,7 +370,7 @@ namespace Antigravity.Core.Sync
 
             var cmd = new DuplicantFullStateCommand
             {
-                DuplicantId = duplicantId,
+                DuplicantName = duplicantName,
                 PositionX = pos.x,
                 PositionY = pos.y,
                 PositionZ = pos.z,
@@ -402,7 +417,7 @@ namespace Antigravity.Core.Sync
 
                 var cmd = new Commands.PositionSyncCommand
                 {
-                    DuplicantId = kvp.Key,
+                    DuplicantName = kvp.Key,
                     PositionX = pos.x,
                     PositionY = pos.y,
                     PositionZ = pos.z,
@@ -423,7 +438,7 @@ namespace Antigravity.Core.Sync
             // Only clients should apply position sync
             if (Antigravity.Core.Network.MultiplayerState.IsHost) return;
 
-            MinionIdentity minion = GetMinion(cmd.DuplicantId);
+            MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null) return;
 
             Vector3 hostPos = new Vector3(cmd.PositionX, cmd.PositionY, cmd.PositionZ);

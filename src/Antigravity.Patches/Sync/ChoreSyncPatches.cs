@@ -34,7 +34,7 @@ namespace Antigravity.Patches.Sync
                 // Create command
                 var cmd = new ChoreStartCommand
                 {
-                    DuplicantId = minion.GetInstanceID(),
+                    DuplicantName = minion.name,
                     ChoreTypeId = chore.choreType.Id,
                     TargetCell = Grid.PosToCell(chore.target.gameObject),
                     TargetId = chore.target.gameObject.GetInstanceID()

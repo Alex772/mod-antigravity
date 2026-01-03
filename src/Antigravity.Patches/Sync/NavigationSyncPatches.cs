@@ -30,7 +30,7 @@ namespace Antigravity.Patches.Sync
 
                 var cmd = new NavigateToCommand
                 {
-                    DuplicantId = minion.GetInstanceID(),
+                    DuplicantName = minion.name,
                     TargetCell = Grid.PosToCell(target),
                     TargetId = target.gameObject.GetInstanceID()
                 };

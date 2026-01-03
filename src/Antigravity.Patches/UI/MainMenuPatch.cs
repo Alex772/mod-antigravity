@@ -1,6 +1,7 @@
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
+using Antigravity.Core;
 
 namespace Antigravity.Patches.UI
 {
@@ -105,19 +106,31 @@ namespace Antigravity.Patches.UI
     }
 
     /// <summary>
-    /// Patches the main menu to add a Multiplayer button.
+    /// Patches the main menu to add Multiplayer buttons.
     /// Note: This patch is applied manually by PatchManager, not via attribute.
     /// </summary>
     public static class MainMenuPatch
     {
         /// <summary>
-        /// Postfix patch to add Multiplayer button after MainMenu spawns.
+        /// Postfix patch to add Multiplayer buttons after MainMenu spawns.
         /// </summary>
         public static void Postfix(MainMenu __instance)
         {
             try
             {
+                // Load config (check for command line args)
+                MultiplayerConfig.Load();
+
+                // Main multiplayer button (Steam) - always visible in all builds
                 MainMenuExtensions.AddButton(__instance, "MULTIPLAYER", OnMultiplayerClick, highlight: true);
+                
+#if DEBUG
+                // Local test button - ONLY visible in DEBUG builds (not in production)
+                MainMenuExtensions.AddButton(__instance, "🔧 LOCAL TEST (DEV)", OnLocalTestClick, highlight: false);
+
+                // Ensure hotkey handler exists (debug only)
+                EnsureHotkeyHandler();
+#endif
             }
             catch (System.Exception ex)
             {
@@ -129,9 +142,57 @@ namespace Antigravity.Patches.UI
         private static void OnMultiplayerClick()
         {
             Debug.Log("[Antigravity] Multiplayer button clicked!");
-            
-            // Show the multiplayer lobby screen
+            MultiplayerConfig.UseLocalNetworking = false;
             Client.MultiplayerLobbyScreen.Show();
         }
+
+#if DEBUG
+        private static void OnLocalTestClick()
+        {
+            Debug.Log("[Antigravity] Local Test button clicked!");
+            MultiplayerConfig.UseLocalNetworking = true;
+            Client.LocalTestLobbyScreen.Show();
+        }
+
+        private static void EnsureHotkeyHandler()
+        {
+            if (GameObject.Find("AntigravityHotkeyHandler") == null)
+            {
+                var handler = new GameObject("AntigravityHotkeyHandler");
+                handler.AddComponent<MultiplayerHotkeyHandler>();
+                Object.DontDestroyOnLoad(handler);
+            }
+        }
+#endif
     }
+
+#if DEBUG
+    /// <summary>
+    /// Handles global hotkeys for multiplayer features.
+    /// DEBUG ONLY - Not included in production builds.
+    /// F11 = Open Local Test lobby (for quick testing)
+    /// F10 = Open Steam Multiplayer lobby
+    /// </summary>
+    public class MultiplayerHotkeyHandler : MonoBehaviour
+    {
+        private void Update()
+        {
+            // F11 = Open Local Test Mode (for development)
+            if (Input.GetKeyDown(KeyCode.F11))
+            {
+                Debug.Log("[Antigravity] F11 pressed - Opening Local Test Mode");
+                MultiplayerConfig.UseLocalNetworking = true;
+                Client.LocalTestLobbyScreen.Show();
+            }
+
+            // F10 = Open Steam Multiplayer
+            if (Input.GetKeyDown(KeyCode.F10))
+            {
+                Debug.Log("[Antigravity] F10 pressed - Opening Steam Multiplayer");
+                MultiplayerConfig.UseLocalNetworking = false;
+                Client.MultiplayerLobbyScreen.Show();
+            }
+        }
+    }
+#endif
 }

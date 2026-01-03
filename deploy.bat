@@ -12,8 +12,8 @@ set DESTINO=C:\Users\Saikai\OneDrive\Documentos\Klei\OxygenNotIncluded\mods\Dev\
 :: Ir para a pasta do projeto
 cd /d "%PROJETO%"
 
-:: Compilar
-echo [1/3] Compilando o projeto...
+:: Compilar (DEBUG para desenvolvimento - inclui botao LOCAL TEST e hotkeys F10/F11)
+echo [1/3] Compilando em modo DEBUG...
 dotnet build Antigravity.sln --configuration Debug --verbosity quiet
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO: Falha na compilacao!

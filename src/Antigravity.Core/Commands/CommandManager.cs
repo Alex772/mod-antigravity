@@ -1119,21 +1119,21 @@ namespace Antigravity.Core.Commands
         private static void ExecuteChoreStartCommand(ChoreStartCommand cmd)
         {
             if (cmd == null) return;
-            Debug.Log($"[Antigravity] EXECUTE: ChoreStart Dupe={cmd.DuplicantId} Chore={cmd.ChoreTypeId} at {cmd.TargetCell}");
+            Debug.Log($"[Antigravity] EXECUTE: ChoreStart Dupe={cmd.DuplicantName} Chore={cmd.ChoreTypeId} at {cmd.TargetCell}");
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleChoreStart(cmd);
         }
 
         private static void ExecuteChoreEndCommand(ChoreEndCommand cmd)
         {
             if (cmd == null) return;
-            Debug.Log($"[Antigravity] EXECUTE: ChoreEnd Dupe={cmd.DuplicantId} Chore={cmd.ChoreTypeId}");
+            Debug.Log($"[Antigravity] EXECUTE: ChoreEnd Dupe={cmd.DuplicantName} Chore={cmd.ChoreTypeId}");
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleChoreEnd(cmd);
         }
 
         private static void ExecuteNavigateToCommand(NavigateToCommand cmd)
         {
             if (cmd == null) return;
-            Debug.Log($"[Antigravity] EXECUTE: NavigateTo Dupe={cmd.DuplicantId} to {cmd.TargetCell}");
+            Debug.Log($"[Antigravity] EXECUTE: NavigateTo Dupe={cmd.DuplicantName} to {cmd.TargetCell}");
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleNavigateTo(cmd);
         }
 
@@ -1146,7 +1146,7 @@ namespace Antigravity.Core.Commands
         private static void ExecuteDuplicantFullStateCommand(DuplicantFullStateCommand cmd)
         {
             if (cmd == null) return;
-            Debug.Log($"[Antigravity] EXECUTE: FullStateSync Dupe={cmd.DuplicantId} at {cmd.CurrentCell}");
+            Debug.Log($"[Antigravity] EXECUTE: FullStateSync Dupe={cmd.DuplicantName} at {cmd.CurrentCell}");
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.ApplyFullState(cmd);
         }
 

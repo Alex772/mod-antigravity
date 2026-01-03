@@ -6,14 +6,14 @@ echo.
 
 :: Definir caminhos
 set PROJETO=d:\Desenvolvimento\ONI\mod antigravity
-set BUILD_DIR=%PROJETO%\bin\Debug
+set BUILD_DIR=%PROJETO%\bin\Release
 set DIST_DIR=%PROJETO%\dist
 set MOD_NAME=Antigravity
 
-:: Compilar primeiro
-echo [1/4] Compilando...
+:: Compilar primeiro (RELEASE para producao - exclui funcionalidades de debug)
+echo [1/4] Compilando em modo RELEASE...
 cd /d "%PROJETO%"
-dotnet build Antigravity.sln --configuration Debug --verbosity quiet
+dotnet build Antigravity.sln --configuration Release --verbosity quiet
 if %ERRORLEVEL% NEQ 0 (
     echo ERRO: Falha na compilacao!
     pause

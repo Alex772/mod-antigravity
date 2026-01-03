@@ -310,7 +310,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class ChoreStartCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public string ChoreTypeId { get; set; }
         public int TargetCell { get; set; }
         
@@ -329,7 +329,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class ChoreEndCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public string ChoreTypeId { get; set; }
 
         public ChoreEndCommand() : base(GameCommandType.ChoreEnd) { }
@@ -341,7 +341,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class NavigateToCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public int TargetCell { get; set; }
         public int TargetId { get; set; } // Optional target object
 
@@ -354,7 +354,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class DuplicantChecksumCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public long Checksum { get; set; }
         public int CurrentCell { get; set; }
         public string CurrentChore { get; set; }
@@ -368,7 +368,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class DuplicantFullStateCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public float PositionX { get; set; }
         public float PositionY { get; set; }
         public float PositionZ { get; set; }
@@ -386,7 +386,7 @@ namespace Antigravity.Core.Commands
     [Serializable]
     public class PositionSyncCommand : GameCommand
     {
-        public int DuplicantId { get; set; }
+        public string DuplicantName { get; set; }
         public float PositionX { get; set; }
         public float PositionY { get; set; }
         public float PositionZ { get; set; }
