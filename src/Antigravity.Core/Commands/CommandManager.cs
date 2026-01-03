@@ -161,6 +161,20 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<StorageFilterCommand>(payload);
                 case GameCommandType.UtilityBuild:
                     return MessageSerializer.DeserializePayload<UtilityBuildCommand>(payload);
+                case GameCommandType.ChoreStart:
+                    return MessageSerializer.DeserializePayload<ChoreStartCommand>(payload);
+                case GameCommandType.ChoreEnd:
+                    return MessageSerializer.DeserializePayload<ChoreEndCommand>(payload);
+                case GameCommandType.NavigateTo:
+                    return MessageSerializer.DeserializePayload<NavigateToCommand>(payload);
+                case GameCommandType.DuplicantChecksum:
+                    return MessageSerializer.DeserializePayload<DuplicantChecksumCommand>(payload);
+                case GameCommandType.DuplicantFullState:
+                    return MessageSerializer.DeserializePayload<DuplicantFullStateCommand>(payload);
+                case GameCommandType.PositionSync:
+                    return MessageSerializer.DeserializePayload<PositionSyncCommand>(payload);
+                case GameCommandType.RandomSeedSync:
+                    return MessageSerializer.DeserializePayload<RandomSeedSyncCommand>(payload);
                 default:
                     return MessageSerializer.DeserializePayload<GameCommand>(payload);
             }
@@ -320,6 +334,27 @@ namespace Antigravity.Core.Commands
                         break;
                     case GameCommandType.UtilityBuild:
                         ExecuteUtilityBuildCommand(command as UtilityBuildCommand);
+                        break;
+                    case GameCommandType.ChoreStart:
+                        ExecuteChoreStartCommand(command as ChoreStartCommand);
+                        break;
+                    case GameCommandType.ChoreEnd:
+                        ExecuteChoreEndCommand(command as ChoreEndCommand);
+                        break;
+                    case GameCommandType.NavigateTo:
+                        ExecuteNavigateToCommand(command as NavigateToCommand);
+                        break;
+                    case GameCommandType.DuplicantChecksum:
+                        ExecuteDuplicantChecksumCommand(command as DuplicantChecksumCommand);
+                        break;
+                    case GameCommandType.DuplicantFullState:
+                        ExecuteDuplicantFullStateCommand(command as DuplicantFullStateCommand);
+                        break;
+                    case GameCommandType.PositionSync:
+                        ExecutePositionSyncCommand(command as PositionSyncCommand);
+                        break;
+                    case GameCommandType.RandomSeedSync:
+                        ExecuteRandomSeedSyncCommand(command as RandomSeedSyncCommand);
                         break;
                     default:
                         Debug.LogWarning($"[Antigravity] Unknown command type: {command.Type}");
@@ -1080,6 +1115,52 @@ namespace Antigravity.Core.Commands
         }
 
         #endregion
+
+        private static void ExecuteChoreStartCommand(ChoreStartCommand cmd)
+        {
+            if (cmd == null) return;
+            Debug.Log($"[Antigravity] EXECUTE: ChoreStart Dupe={cmd.DuplicantId} Chore={cmd.ChoreTypeId} at {cmd.TargetCell}");
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleChoreStart(cmd);
+        }
+
+        private static void ExecuteChoreEndCommand(ChoreEndCommand cmd)
+        {
+            if (cmd == null) return;
+            Debug.Log($"[Antigravity] EXECUTE: ChoreEnd Dupe={cmd.DuplicantId} Chore={cmd.ChoreTypeId}");
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleChoreEnd(cmd);
+        }
+
+        private static void ExecuteNavigateToCommand(NavigateToCommand cmd)
+        {
+            if (cmd == null) return;
+            Debug.Log($"[Antigravity] EXECUTE: NavigateTo Dupe={cmd.DuplicantId} to {cmd.TargetCell}");
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.HandleNavigateTo(cmd);
+        }
+
+        private static void ExecuteDuplicantChecksumCommand(DuplicantChecksumCommand cmd)
+        {
+            if (cmd == null) return;
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.VerifyChecksum(cmd);
+        }
+
+        private static void ExecuteDuplicantFullStateCommand(DuplicantFullStateCommand cmd)
+        {
+            if (cmd == null) return;
+            Debug.Log($"[Antigravity] EXECUTE: FullStateSync Dupe={cmd.DuplicantId} at {cmd.CurrentCell}");
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.ApplyFullState(cmd);
+        }
+
+        private static void ExecutePositionSyncCommand(PositionSyncCommand cmd)
+        {
+            if (cmd == null) return;
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.ApplyPositionSync(cmd);
+        }
+
+        private static void ExecuteRandomSeedSyncCommand(RandomSeedSyncCommand cmd)
+        {
+            if (cmd == null) return;
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.ApplyRandomSeed(cmd);
+        }
 
         private static long GetCurrentTick()
         {

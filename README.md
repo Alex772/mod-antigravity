@@ -35,9 +35,9 @@
 | Fase | Status | Descrição |
 |------|--------|-----------|
 | Fase 1 | ✅ Concluída | Sistema de Lobby Steam |
-| Fase 2 | 🔄 Próxima | Sincronização inicial do mundo |
-| Fase 3 | 📋 Planejado | Sincronização de comandos |
-| Fase 4 | 📋 Planejado | UI in-game (cursores, chat) |
+| Fase 2 | ✅ Próxima | Sincronização inicial do mundo |
+| Fase 3 | ✅ Planejado | Sincronização de comandos |
+| Fase 4 | 🔄 Planejado | UI in-game (cursores, chat) |
 | Fase 5 | 📋 Planejado | Polish e reconexão |
 
 ---
@@ -50,8 +50,11 @@
 2. Extraia para `%USERPROFILE%\Documents\Klei\OxygenNotIncluded\mods\Local\`
 3. Ative o mod no menu de mods do jogo
 
-### Via Steam Workshop
-*Em breve...*
+### Via Steam Workshop (Recomendado)
+
+1. Acesse a [página do mod na Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3635632392)
+2. Clique em **"+ Inscrever-se"**
+3. O mod será instalado automaticamente!
 
 ---
 

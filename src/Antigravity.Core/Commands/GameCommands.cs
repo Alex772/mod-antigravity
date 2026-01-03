@@ -64,6 +64,15 @@ namespace Antigravity.Core.Commands
         // Utility build (wires, pipes - uses path instead of single cell)
         UtilityBuild = 91,
         
+        // Duplicant synchronization
+        ChoreStart = 110,           // Duplicant started a chore
+        ChoreEnd = 111,             // Duplicant ended a chore
+        NavigateTo = 112,           // Duplicant navigation destination
+        DuplicantFullState = 113,   // Full state sync (fallback)
+        DuplicantChecksum = 114,    // Checksum verification
+        PositionSync = 115,         // Lightweight position sync
+        RandomSeedSync = 116,       // Random seed synchronization
+        
         // Generic
         Custom = 100
     }
@@ -293,5 +302,110 @@ namespace Antigravity.Core.Commands
         public string[] AcceptedTags { get; set; }
 
         public StorageFilterCommand() : base(GameCommandType.SetStorageFilter) { }
+    }
+
+    /// <summary>
+    /// Command sent when a Duplicant starts a chore.
+    /// </summary>
+    [Serializable]
+    public class ChoreStartCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public string ChoreTypeId { get; set; }
+        public int TargetCell { get; set; }
+        
+        // InstanceID of target GameObject (e.g. what is being dug or built)
+        public int TargetId { get; set; } 
+        
+        // Serialized context data if needed
+        public string ContextData { get; set; }
+
+        public ChoreStartCommand() : base(GameCommandType.ChoreStart) { }
+    }
+
+    /// <summary>
+    /// Command sent when a Duplicant ends a chore.
+    /// </summary>
+    [Serializable]
+    public class ChoreEndCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public string ChoreTypeId { get; set; }
+
+        public ChoreEndCommand() : base(GameCommandType.ChoreEnd) { }
+    }
+
+    /// <summary>
+    /// Command sent when a Duplicant sets a navigation destination.
+    /// </summary>
+    [Serializable]
+    public class NavigateToCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public int TargetCell { get; set; }
+        public int TargetId { get; set; } // Optional target object
+
+        public NavigateToCommand() : base(GameCommandType.NavigateTo) { }
+    }
+
+    /// <summary>
+    /// Command to verify Duplicant state consistency.
+    /// </summary>
+    [Serializable]
+    public class DuplicantChecksumCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public long Checksum { get; set; }
+        public int CurrentCell { get; set; }
+        public string CurrentChore { get; set; }
+
+        public DuplicantChecksumCommand() : base(GameCommandType.DuplicantChecksum) { }
+    }
+
+    /// <summary>
+    /// Full state synchronization for a Duplicant (fallback mechanism).
+    /// </summary>
+    [Serializable]
+    public class DuplicantFullStateCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public float PositionX { get; set; }
+        public float PositionY { get; set; }
+        public float PositionZ { get; set; }
+        public int CurrentCell { get; set; }
+        public string CurrentChore { get; set; }
+        public int TargetCell { get; set; }
+
+        public DuplicantFullStateCommand() : base(GameCommandType.DuplicantFullState) { }
+    }
+
+    /// <summary>
+    /// Lightweight position sync for a single Duplicant.
+    /// Sent more frequently than full state for smoother sync.
+    /// </summary>
+    [Serializable]
+    public class PositionSyncCommand : GameCommand
+    {
+        public int DuplicantId { get; set; }
+        public float PositionX { get; set; }
+        public float PositionY { get; set; }
+        public float PositionZ { get; set; }
+        public int CurrentCell { get; set; }
+        public bool IsMoving { get; set; }
+        public int TargetCell { get; set; }
+
+        public PositionSyncCommand() : base(GameCommandType.PositionSync) { }
+    }
+
+    /// <summary>
+    /// Synchronize the Random seed to ensure deterministic behavior.
+    /// </summary>
+    [Serializable]
+    public class RandomSeedSyncCommand : GameCommand
+    {
+        public int Seed { get; set; }
+        public long GameTick { get; set; }
+
+        public RandomSeedSyncCommand() : base(GameCommandType.RandomSeedSync) { }
     }
 }

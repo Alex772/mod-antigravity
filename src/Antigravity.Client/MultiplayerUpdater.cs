@@ -64,6 +64,14 @@ namespace Antigravity.Client
             GameSession.OnGameStarted -= OnGameStarted;
         }
 
+        // Checksum sync timer (Host only, every 5 seconds)
+        private float _checksumTimer = 0f;
+        private const float CHECKSUM_INTERVAL = 5f;
+
+        // Position sync timer (Host only, every 2 seconds)
+        private float _positionSyncTimer = 0f;
+        private const float POSITION_SYNC_INTERVAL = 2f;
+
         private void Update()
         {
             // Poll for network messages
@@ -76,6 +84,31 @@ namespace Antigravity.Client
             if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded)
             {
                 CommandManager.ProcessPendingCommands();
+
+                // Host sync logic
+                if (MultiplayerState.IsHost)
+                {
+                    // Position sync (every 2 seconds)
+                    _positionSyncTimer += Time.deltaTime;
+                    if (_positionSyncTimer >= POSITION_SYNC_INTERVAL)
+                    {
+                        _positionSyncTimer = 0f;
+                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendPositionSync();
+                    }
+
+                    // Checksum sync (every 5 seconds)
+                    _checksumTimer += Time.deltaTime;
+                    if (_checksumTimer >= CHECKSUM_INTERVAL)
+                    {
+                        _checksumTimer = 0f;
+                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendMinionChecksums();
+                    }
+                }
+                else
+                {
+                    // Client: Process any pending chores that couldn't be assigned immediately
+                    Antigravity.Core.Sync.DuplicantSyncManager.Instance.ProcessPendingChores();
+                }
             }
         }
 
@@ -222,9 +255,18 @@ namespace Antigravity.Client
             Debug.Log("[Antigravity] Game started in multiplayer mode!");
             _isLoadingWorld = false;
 
-            // If client, notify host that we're ready
-            if (!SteamNetworkManager.IsHost)
+            // Initialize DuplicantSyncManager
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.Initialize();
+
+            // If host, send random seed to ensure deterministic behavior
+            if (SteamNetworkManager.IsHost)
             {
+                Debug.Log("[Antigravity] Host sending random seed to clients...");
+                Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendRandomSeed();
+            }
+            else
+            {
+                // If client, notify host that we're ready
                 GameSession.ClientReady();
             }
         }
