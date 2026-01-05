@@ -1,0 +1,476 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Antigravity.Debugger.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="700"
+        x:Class="Antigravity.Debugger.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="🔌 Antigravity Debugger"
+        Width="1200" Height="700"
+        Background="#1e1e2e">
+    
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    
+    <Window.Styles>
+        <!-- Base Styles -->
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="BorderBrush" Value="#45475a"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Background" Value="#45475a"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#585b70"/>
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#89b4fa"/>
+            <Setter Property="Foreground" Value="#1e1e2e"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#b4befe"/>
+        </Style>
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#f38ba8"/>
+            <Setter Property="Foreground" Value="#1e1e2e"/>
+        </Style>
+        <Style Selector="Button.success">
+            <Setter Property="Background" Value="#a6e3a1"/>
+            <Setter Property="Foreground" Value="#1e1e2e"/>
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="#181825"/>
+            <Setter Property="BorderBrush" Value="#313244"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#45475a"/>
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#181825"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="#313244"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+        
+        <!-- Tab Styles -->
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="TabItem">
+            <Setter Property="Background" Value="#313244"/>
+            <Setter Property="Foreground" Value="#a6adc8"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Margin" Value="0,0,2,0"/>
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Background" Value="#45475a"/>
+            <Setter Property="Foreground" Value="#cdd6f4"/>
+        </Style>
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Background" Value="#45475a"/>
+        </Style>
+    </Window.Styles>
+    
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- TOP BAR - Connection & Status -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#11111b" Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                <!-- Logo -->
+                <TextBlock Grid.Column="0" Text="🔌 ANTIGRAVITY DEBUGGER" 
+                           FontSize="18" FontWeight="Bold" Foreground="#89b4fa" VerticalAlignment="Center"/>
+                
+                <!-- Connection Controls -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Host:" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding HostAddress}" Width="120" IsEnabled="{Binding !IsConnected}"/>
+                    <TextBlock Text=":" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding HostPort}" Width="60" IsEnabled="{Binding !IsConnected}"/>
+                </StackPanel>
+                
+                <!-- Connect Button -->
+                <Button Grid.Column="3" Command="{Binding ToggleConnectionCommand}"
+                        Classes.primary="{Binding !IsConnected}" Classes.danger="{Binding IsConnected}" Margin="16,0,0,0">
+                    <Panel>
+                        <TextBlock Text="Connect" IsVisible="{Binding !IsConnected}"/>
+                        <TextBlock Text="Disconnect" IsVisible="{Binding IsConnected}"/>
+                    </Panel>
+                </Button>
+                
+                <!-- Status Indicator -->
+                <Border Grid.Column="4" Background="#313244" CornerRadius="4" Padding="8,4" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Ellipse Width="8" Height="8" Fill="#a6e3a1" IsVisible="{Binding IsConnected}"/>
+                        <Ellipse Width="8" Height="8" Fill="#f38ba8" IsVisible="{Binding !IsConnected}"/>
+                        <TextBlock Text="{Binding ConnectionStatus}" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Stats -->
+                <TextBlock Grid.Column="5" Text="{Binding StatsText}" Foreground="#a6adc8" Margin="16,0,0,0" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+        
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- MAIN CONTENT - TabControl -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <TabControl Grid.Row="1" Margin="16,8,16,0" SelectedIndex="{Binding SelectedTabIndex}">
+            
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- TAB 1: CONSOLE (Live Packet Capture) -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <TabItem Header="📡 Console">
+                <Grid ColumnDefinitions="*,350" Margin="0,12,0,0">
+                    <!-- Left: Packet Groups -->
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <TextBlock Text="PACKET CAPTURE" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                        
+                        <Border Grid.Row="1" Classes="card">
+                            <ScrollViewer>
+                                <ListBox ItemsSource="{Binding PacketGroups}" 
+                                         SelectedItem="{Binding SelectedGroup}"
+                                         Background="Transparent" BorderThickness="0">
+                                    <ListBox.Styles>
+                                        <Style Selector="ListBoxItem">
+                                            <Setter Property="Padding" Value="4"/>
+                                            <Setter Property="Margin" Value="0,2"/>
+                                        </Style>
+                                    </ListBox.Styles>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Expander IsExpanded="{Binding IsExpanded}">
+                                                <Expander.Header>
+                                                    <Grid ColumnDefinitions="25,70,130,*,50">
+                                                        <TextBlock Grid.Column="0" Text="{Binding DirectionSymbol}" 
+                                                                   FontFamily="Consolas" HorizontalAlignment="Center" Foreground="#89b4fa"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding TimeString}" 
+                                                                   Foreground="#a6adc8" FontFamily="Consolas" FontSize="11"/>
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding MainCommandName}" FontWeight="SemiBold" Foreground="#cba6f7"/>
+                                                            <TextBlock Text="{Binding PacketCount, StringFormat=' ({0})'}" Foreground="#6c7086" FontSize="11"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="4" Text="{Binding TotalBytesString}" 
+                                                                   Foreground="#a6adc8" HorizontalAlignment="Right" FontSize="11"/>
+                                                    </Grid>
+                                                </Expander.Header>
+                                                <Expander.Content>
+                                                    <Border Background="#11111b" CornerRadius="4" Padding="8" Margin="25,4,0,0">
+                                                        <ListBox ItemsSource="{Binding Packets}" 
+                                                                 SelectedItem="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedPacket}"
+                                                                 Background="Transparent" BorderThickness="0">
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid ColumnDefinitions="110,*,50">
+                                                                        <TextBlock Grid.Column="0" Text="{Binding CommandTypeName}" 
+                                                                                   Foreground="#f9e2af" FontSize="11" FontWeight="SemiBold"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding PayloadJson}" 
+                                                                                   Foreground="#6c7086" TextTrimming="CharacterEllipsis" FontSize="10" Margin="8,0,0,0"/>
+                                                                        <TextBlock Grid.Column="2" Text="{Binding SizeString}" 
+                                                                                   Foreground="#585b70" HorizontalAlignment="Right" FontSize="10"/>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Border>
+                                                </Expander.Content>
+                                            </Expander>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+                        </Border>
+                        
+                        <!-- Console Actions -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+                            <Button Command="{Binding ClearPacketsCommand}">🗑 Clear</Button>
+                            <Button Command="{Binding SaveSelectedGroupCommand}" 
+                                    IsEnabled="{Binding SelectedGroup, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                💾 Save Group
+                            </Button>
+                            <Button Command="{Binding SaveSelectedPacketCommand}" 
+                                    IsEnabled="{Binding SelectedPacket, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                💾 Save Packet
+                            </Button>
+                            <Button Command="{Binding ReplayGroupCommand}" Classes="primary"
+                                    IsEnabled="{Binding SelectedGroup, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                ▶ Replay Group
+                            </Button>
+                            <Button Command="{Binding ReplaySelectedCommand}" Classes="primary"
+                                    IsEnabled="{Binding SelectedPacket, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                ▶ Replay Packet
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Right: Inspector -->
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,*" Margin="16,0,0,0">
+                        <TextBlock Text="INSPECTOR" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                        
+                        <Border Grid.Row="1" Classes="card">
+                            <ScrollViewer>
+                                <StackPanel Spacing="8" IsVisible="{Binding SelectedPacket, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <Grid ColumnDefinitions="80,*">
+                                        <TextBlock Text="Type:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedPacket.MessageTypeName}" FontWeight="SemiBold"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="80,*">
+                                        <TextBlock Text="Command:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedPacket.CommandTypeName}" FontWeight="SemiBold" Foreground="#cba6f7"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="80,*">
+                                        <TextBlock Text="GameTick:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedPacket.GameTick}"/>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="80,*">
+                                        <TextBlock Text="Size:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedPacket.SizeString}"/>
+                                    </Grid>
+                                    <TextBlock Text="Payload (JSON):" Foreground="#a6adc8" Margin="0,8,0,4"/>
+                                    <Border Background="#11111b" CornerRadius="4" Padding="8">
+                                        <TextBox Text="{Binding SelectedPacket.PayloadJsonFormatted}" 
+                                                 FontFamily="Consolas" FontSize="11" AcceptsReturn="True" IsReadOnly="True"
+                                                 TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Foreground="#a6e3a1"/>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                        
+                        <TextBlock Grid.Row="2" Text="HEX VIEW" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,12,0,8"/>
+                        
+                        <Border Grid.Row="3" Classes="card">
+                            <ScrollViewer>
+                                <TextBox Text="{Binding SelectedPacket.RawHex}" 
+                                         FontFamily="Consolas" FontSize="10" AcceptsReturn="True" IsReadOnly="True"
+                                         TextWrapping="Wrap" Background="Transparent" BorderThickness="0" Foreground="#fab387"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- TAB 2: COMMAND MANAGER -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <TabItem Header="📦 Commands">
+                <Grid ColumnDefinitions="300,*,280" Margin="0,12,0,0">
+                    <!-- Left: Saved Commands List -->
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <TextBlock Text="SAVED COMMANDS" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                        
+                        <Border Grid.Row="1" Classes="card">
+                            <ListBox ItemsSource="{Binding SavedCommands}" 
+                                     SelectedItem="{Binding SelectedSavedCommand}"
+                                     Background="Transparent" BorderThickness="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="20,*,Auto" Margin="4">
+                                            <TextBlock Text="{Binding TypeIcon}" FontSize="12"/>
+                                            <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="#cba6f7"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{Binding PacketCount, StringFormat='{}{0}p'}" FontSize="10" Foreground="#6c7086"/>
+                                                    <TextBlock Text="•" FontSize="10" Foreground="#6c7086"/>
+                                                    <TextBlock Text="{Binding TotalBytesString}" FontSize="10" Foreground="#89b4fa"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding CreatedAt, StringFormat='{}{0:MM/dd}'}" 
+                                                       FontSize="10" Foreground="#585b70" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                        
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+                            <Button Command="{Binding RefreshSavedCommandsCommand}" Padding="8,6">↻</Button>
+                            <Button Command="{Binding DeleteSavedCommandCommand}" Classes="danger" Padding="8,6"
+                                    IsEnabled="{Binding SelectedSavedCommand, Converter={x:Static ObjectConverters.IsNotNull}}">🗑</Button>
+                            <Button Command="{Binding AddToGroupBuilderCommand}" Classes="success" Padding="8,6"
+                                    IsEnabled="{Binding SelectedSavedCommand, Converter={x:Static ObjectConverters.IsNotNull}}">+ Add to Group</Button>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Center: Command Details -->
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="16,0">
+                        <TextBlock Text="COMMAND DETAILS" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                        
+                        <Border Grid.Row="1" Classes="card">
+                            <ScrollViewer>
+                                <StackPanel Spacing="8" IsVisible="{Binding SelectedSavedCommand, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <!-- Header -->
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding SelectedSavedCommand.TypeIcon}" FontSize="24"/>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SelectedSavedCommand.DisplayName}" FontWeight="Bold" FontSize="18"/>
+                                            <TextBlock Text="{Binding SelectedSavedCommand.Description}" FontSize="11" Foreground="#6c7086"
+                                                       IsVisible="{Binding SelectedSavedCommand.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    
+                                    <Separator Background="#313244" Margin="0,8"/>
+                                    
+                                    <!-- Info Grid -->
+                                    <Grid ColumnDefinitions="90,*,90,*" RowDefinitions="Auto,Auto,Auto">
+                                        <TextBlock Text="Type:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding SelectedSavedCommand.CommandType}" Foreground="#cba6f7" FontWeight="SemiBold"/>
+                                        <TextBlock Grid.Column="2" Text="Packets:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding SelectedSavedCommand.PacketCount}"/>
+                                        
+                                        <TextBlock Grid.Row="1" Text="GameTick:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedSavedCommand.GameTick}"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Size:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding SelectedSavedCommand.TotalBytesString}" Foreground="#89b4fa"/>
+                                        
+                                        <TextBlock Grid.Row="2" Text="Created:" Foreground="#a6adc8"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" 
+                                                   Text="{Binding SelectedSavedCommand.CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"/>
+                                    </Grid>
+                                    
+                                    <Separator Background="#313244" Margin="0,8"/>
+                                    
+                                    <!-- Packets List -->
+                                    <TextBlock Text="PACKETS" FontWeight="SemiBold" Foreground="#a6adc8"/>
+                                    <Border Background="#11111b" CornerRadius="4" Padding="8" MaxHeight="200">
+                                        <ScrollViewer>
+                                            <ItemsControl ItemsSource="{Binding SelectedSavedCommand.Packets}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid ColumnDefinitions="25,120,50,*" Margin="0,3">
+                                                            <TextBlock Text="{Binding Order, StringFormat='#{0}'}" Foreground="#6c7086" FontFamily="Consolas" FontSize="11"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding CommandTypeName}" Foreground="#f9e2af" FontWeight="SemiBold" FontSize="11"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding SizeString}" Foreground="#585b70" FontSize="10"/>
+                                                            <TextBlock Grid.Column="3" Text="{Binding PayloadJson}" Foreground="#6c7086" 
+                                                                       TextTrimming="CharacterEllipsis" FontSize="10"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                        
+                        <Button Grid.Row="2" Command="{Binding ReplaySavedCommandCommand}" Classes="primary" Padding="20,10"
+                                HorizontalAlignment="Stretch" Margin="0,12,0,0"
+                                IsEnabled="{Binding SelectedSavedCommand, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            ▶ REPLAY COMMAND
+                        </Button>
+                    </Grid>
+                    
+                    <!-- Right: Group Builder -->
+                    <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="GROUP BUILDER" FontWeight="SemiBold" Foreground="#a6adc8"/>
+                            <TextBlock Text="{Binding PacketsForGroup.Count, StringFormat='({0} packets)'}" FontSize="11" Foreground="#6c7086" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        
+                        <Border Grid.Row="1" Classes="card" Margin="0,8,0,0">
+                            <ScrollViewer>
+                                <StackPanel Spacing="2">
+                                    <ItemsControl ItemsSource="{Binding PacketsForGroup}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#313244" CornerRadius="4" Padding="4" Margin="0,1">
+                                                    <Grid ColumnDefinitions="25,*,Auto">
+                                                        <!-- Order number -->
+                                                        <TextBlock Text="{Binding Order, StringFormat='#{0}'}" 
+                                                                   FontFamily="Consolas" FontSize="10" Foreground="#6c7086" 
+                                                                   VerticalAlignment="Center"/>
+                                                        
+                                                        <!-- Packet info -->
+                                                        <StackPanel Grid.Column="1" Margin="4,0">
+                                                            <TextBlock Text="{Binding CommandTypeName}" FontSize="11" Foreground="#f9e2af" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding SizeString}" FontSize="9" Foreground="#585b70"/>
+                                                        </StackPanel>
+                                                        
+                                                        <!-- Controls -->
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
+                                                            <Button Padding="4,2" Background="Transparent"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MovePacketUpCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="▲" FontSize="8" Foreground="#89b4fa"/>
+                                                            </Button>
+                                                            <Button Padding="4,2" Background="Transparent"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MovePacketDownCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="▼" FontSize="8" Foreground="#89b4fa"/>
+                                                            </Button>
+                                                            <Button Padding="4,2" Background="Transparent"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).RemovePacketFromGroupCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="✕" FontSize="9" Foreground="#f38ba8"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="Select a command and click '+ Add to Group' to add its packets here" 
+                                               FontSize="10" Foreground="#585b70" TextWrapping="Wrap" Margin="0,8,0,0"
+                                               IsVisible="{Binding !PacketsForGroup.Count}"/>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                        
+                        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                            <TextBlock Text="Group Name:" FontSize="11" Foreground="#a6adc8" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding NewGroupName}" Padding="8,6"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0">
+                            <Button Command="{Binding CreateGroupCommand}" Classes="success" HorizontalAlignment="Stretch">
+                                📁 Create Group
+                            </Button>
+                            <Button Command="{Binding ClearGroupBuilderCommand}" HorizontalAlignment="Stretch">
+                                Clear
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- TAB 3: SETTINGS (Placeholder) -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <TabItem Header="⚙️ Settings">
+                <Border Classes="card" Margin="0,12,0,0">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="⚙️" FontSize="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Settings coming soon..." FontSize="16" Foreground="#6c7086" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Future options: Filters, Auto-save, Theme, etc." FontSize="12" Foreground="#585b70" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+            
+        </TabControl>
+        
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- STATUS BAR -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#11111b" Padding="16,8">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <TextBlock Text="{Binding ConnectionStatus}" FontSize="12" Foreground="#a6adc8" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding StatsText}" FontSize="12" Foreground="#89b4fa" VerticalAlignment="Center" Margin="16,0"/>
+                <TextBlock Grid.Column="2" Text="{Binding PacketGroups.Count, StringFormat='Groups: {0}'}" FontSize="12" Foreground="#6c7086" VerticalAlignment="Center" Margin="16,0"/>
+                <TextBlock Grid.Column="3" Text="{Binding SavedCommands.Count, StringFormat='Saved: {0}'}" FontSize="12" Foreground="#6c7086" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+        
+    </Grid>
+</Window>

@@ -227,6 +227,9 @@ namespace Antigravity.Core.Sync
             MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null) return;
 
+            // Host should not process navigation syncs from clients
+            if (Antigravity.Core.Network.MultiplayerState.IsHost) return;
+
             Debug.Log($"[Antigravity] Syncing Navigation for {minion.name} -> {cmd.TargetCell}");
             
             // Logic to move the duplicant visually or logically
@@ -267,7 +270,7 @@ namespace Antigravity.Core.Sync
             if (choreDriver != null)
             {
                 var currentChore = choreDriver.GetCurrentChore();
-                if (currentChore != null)
+                if (currentChore != null && currentChore.choreType != null)
                 {
                     choreId = currentChore.choreType.Id;
                 }
@@ -488,6 +491,163 @@ namespace Antigravity.Core.Sync
             Debug.Log($"[Antigravity] Applying random seed: {cmd.Seed}");
             _syncedSeed = cmd.Seed;
             UnityEngine.Random.InitState(cmd.Seed);
+        }
+
+        #endregion
+
+        #region Client Command Processing
+
+        /// <summary>
+        /// [HOST] Process a command request from a client.
+        /// Validates and executes the request locally, results sync automatically via PositionSync.
+        /// </summary>
+        public void ProcessClientRequest(DuplicantCommandRequestCommand cmd)
+        {
+            if (!Antigravity.Core.Network.MultiplayerState.IsHost)
+            {
+                Debug.LogWarning("[Antigravity] ProcessClientRequest called on client - ignoring");
+                return;
+            }
+
+            var minion = GetMinion(cmd.DuplicantName);
+            if (minion == null)
+            {
+                Debug.LogWarning($"[Antigravity] Client request: Duplicant '{cmd.DuplicantName}' not found");
+                return;
+            }
+
+            switch (cmd.RequestType)
+            {
+                case DuplicantRequestType.MoveTo:
+                    HandleMoveToRequest(minion, cmd.TargetCell);
+                    break;
+                    
+                case DuplicantRequestType.CancelChore:
+                    HandleCancelChoreRequest(minion);
+                    break;
+                    
+                case DuplicantRequestType.AssignChore:
+                    // TODO: Implement chore assignment by type/target
+                    Debug.Log($"[Antigravity] AssignChore request not yet implemented");
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"[Antigravity] Unknown request type: {cmd.RequestType}");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// [HOST] Force a Duplicant to move to a specific cell.
+        /// </summary>
+        private void HandleMoveToRequest(MinionIdentity minion, int targetCell)
+        {
+            if (targetCell < 0 || !Grid.IsValidCell(targetCell))
+            {
+                Debug.LogWarning($"[Antigravity] Invalid target cell: {targetCell}");
+                return;
+            }
+
+            var navigator = minion.GetComponent<Navigator>();
+            if (navigator == null)
+            {
+                Debug.LogError($"[Antigravity] No Navigator on {minion.name}");
+                return;
+            }
+
+            // Cancel current activity safely
+            var choreDriver = minion.GetComponent<ChoreDriver>();
+            if (choreDriver != null)
+            {
+                var currentChore = choreDriver.GetCurrentChore();
+                if (currentChore != null)
+                {
+                    try
+                    {
+                        currentChore.Cancel("Player move command");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning($"[Antigravity] Failed to cancel chore on move: {ex.Message}");
+                    }
+                }
+            }
+
+            // Move to the target cell
+            Vector3 targetPos = Grid.CellToPos(targetCell, CellAlignment.Bottom, Grid.SceneLayer.Move);
+            navigator.GoTo(targetCell);
+            
+            Debug.Log($"[Antigravity] MoveTo request executed: {minion.name} -> cell {targetCell}");
+        }
+
+        /// <summary>
+        /// [HOST] Cancel the current chore of a Duplicant.
+        /// </summary>
+        private void HandleCancelChoreRequest(MinionIdentity minion)
+        {
+            var choreDriver = minion.GetComponent<ChoreDriver>();
+            if (choreDriver != null)
+            {
+                var currentChore = choreDriver.GetCurrentChore();
+                if (currentChore != null)
+                {
+                    try
+                    {
+                        currentChore.Cancel("Player cancel command");
+                        Debug.Log($"[Antigravity] Chore cancelled for {minion.name}");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning($"[Antigravity] Failed to cancel chore: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// [CLIENT/HOST] API to request a Duplicant move to a position.
+        /// On Host, executes directly. On Client, sends to Host.
+        /// </summary>
+        public static void RequestMoveTo(string duplicantName, int targetCell)
+        {
+            var cmd = new DuplicantCommandRequestCommand
+            {
+                DuplicantName = duplicantName,
+                RequestType = DuplicantRequestType.MoveTo,
+                TargetCell = targetCell
+            };
+
+            if (Antigravity.Core.Network.MultiplayerState.IsHost)
+            {
+                // Host executes directly
+                Instance.ProcessClientRequest(cmd);
+            }
+            else
+            {
+                // Client sends to Host
+                Commands.CommandManager.SendCommand(cmd);
+            }
+        }
+
+        /// <summary>
+        /// [CLIENT/HOST] API to request cancellation of a Duplicant's current chore.
+        /// </summary>
+        public static void RequestCancelChore(string duplicantName)
+        {
+            var cmd = new DuplicantCommandRequestCommand
+            {
+                DuplicantName = duplicantName,
+                RequestType = DuplicantRequestType.CancelChore
+            };
+
+            if (Antigravity.Core.Network.MultiplayerState.IsHost)
+            {
+                Instance.ProcessClientRequest(cmd);
+            }
+            else
+            {
+                Commands.CommandManager.SendCommand(cmd);
+            }
         }
 
         #endregion

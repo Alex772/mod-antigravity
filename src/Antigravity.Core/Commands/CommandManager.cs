@@ -29,8 +29,93 @@ namespace Antigravity.Core.Commands
         /// </summary>
         public static void Initialize()
         {
+            // Subscribe to Steam network events (for production)
             SteamNetworkManager.OnDataReceived += OnNetworkDataReceived;
-            Debug.Log("[Antigravity] CommandManager initialized.");
+            
+            // Subscribe to NetworkBackendManager events (for local testing/debugger)
+            NetworkBackendManager.OnDataReceived += OnLocalNetworkDataReceived;
+            
+            Debug.Log("[Antigravity] CommandManager initialized (Steam + Local mode).");
+        }
+        
+        /// <summary>
+        /// Handle data received via NetworkBackendManager (local mode).
+        /// </summary>
+        private static void OnLocalNetworkDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            Debug.Log($"[Antigravity] CommandManager.OnLocalNetworkDataReceived: {e.Data?.Length ?? 0} bytes from peer {e.Sender.Value}");
+            
+            if (e.Data == null || e.Data.Length == 0)
+            {
+                Debug.LogWarning("[Antigravity] Received empty data from local peer");
+                return;
+            }
+            
+            var message = MessageSerializer.Deserialize(e.Data);
+            if (message == null) 
+            {
+                Debug.LogWarning($"[Antigravity] Failed to deserialize message from local peer");
+                return;
+            }
+
+            Debug.Log($"[Antigravity] Deserialized message: Type={message.Type}, SenderId={message.SenderSteamId}");
+
+            if (message.Type == MessageType.Command)
+            {
+                try
+                {
+                    var baseCommand = MessageSerializer.DeserializePayload<GameCommand>(message.Payload);
+                    if (baseCommand == null) return;
+
+                    GameCommand command = DeserializeCommand(baseCommand.Type, message.Payload);
+                    if (command != null)
+                    {
+                        Debug.Log($"[Antigravity] Local command: {command.Type}");
+                        HandleReceivedCommandLocal(command, e.Sender);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Antigravity] Failed to deserialize local command: {ex.Message}");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handle a command received from local network (terminal client/debugger).
+        /// </summary>
+        private static void HandleReceivedCommandLocal(GameCommand command, PlayerId sender)
+        {
+            Debug.Log($"[Antigravity] Processing local command: {command.Type} from player {sender.Value}");
+            
+            // If we're the host, relay to other clients (but not back to sender)
+            if (NetworkBackendManager.IsHost && NetworkBackendManager.Active != null)
+            {
+                RelayCommandLocal(command, sender);
+            }
+
+            // Queue the command for execution
+            _pendingCommands.Enqueue(command);
+            OnCommandReceived?.Invoke(command);
+        }
+        
+        /// <summary>
+        /// Relay a command from one client to all other local clients (LiteNetLib).
+        /// </summary>
+        private static void RelayCommandLocal(GameCommand command, PlayerId originalSender)
+        {
+            var message = MessageSerializer.CreateMessage(
+                MessageType.Command,
+                command,
+                command.SenderSteamId,
+                command.GameTick
+            );
+
+            byte[] data = MessageSerializer.Serialize(message);
+            
+            // Send to all clients except the original sender
+            NetworkBackendManager.SendToAllExcept(originalSender, data);
+            Debug.Log($"[Antigravity] Relayed command {command.Type} to other clients (excluding {originalSender.Value})");
         }
 
         /// <summary>
@@ -46,13 +131,19 @@ namespace Antigravity.Core.Commands
             // Don't send if we're executing a remote command (prevent echo)
             if (_isExecutingRemoteCommand) return;
             
-            // Don't send if not connected
-            if (!SteamNetworkManager.IsConnected) return;
+            // Check connection based on backend
+            bool isConnected = NetworkBackendManager.IsLocalMode 
+                ? NetworkBackendManager.IsConnected 
+                : SteamNetworkManager.IsConnected;
+            
+            if (!isConnected) return;
 
             try
             {
-                // Set sender info
-                command.SenderSteamId = SteamNetworkManager.LocalSteamId.m_SteamID;
+                // Set sender info based on backend
+                command.SenderSteamId = NetworkBackendManager.IsLocalMode 
+                    ? (ulong)NetworkBackendManager.LocalPlayerId.Value 
+                    : SteamNetworkManager.LocalSteamId.m_SteamID;
                 command.GameTick = GetCurrentTick();
 
                 // Create network message
@@ -65,16 +156,32 @@ namespace Antigravity.Core.Commands
 
                 byte[] data = MessageSerializer.Serialize(message);
 
-                // Send to all other players
-                if (SteamNetworkManager.IsHost)
+                // Route to appropriate backend
+                if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
                 {
-                    // Host sends to all clients
-                    SteamNetworkManager.SendToAll(data);
+                    // Local mode uses NetworkBackendManager (LiteNetLib)
+                    if (NetworkBackendManager.IsHost)
+                    {
+                        NetworkBackendManager.SendToAll(data);
+                        Debug.Log($"[Antigravity] Sent command via LiteNetLib: {command.Type}");
+                    }
+                    else
+                    {
+                        NetworkBackendManager.SendTo(NetworkBackendManager.HostPlayerId, data);
+                        Debug.Log($"[Antigravity] Sent command to host via LiteNetLib: {command.Type}");
+                    }
                 }
                 else
                 {
-                    // Client sends to host only (host will relay)
-                    SteamNetworkManager.SendTo(SteamNetworkManager.HostSteamId, data);
+                    // Steam mode uses SteamNetworkManager
+                    if (SteamNetworkManager.IsHost)
+                    {
+                        SteamNetworkManager.SendToAll(data);
+                    }
+                    else
+                    {
+                        SteamNetworkManager.SendTo(SteamNetworkManager.HostSteamId, data);
+                    }
                 }
 
                 OnCommandSent?.Invoke(command);
@@ -175,6 +282,8 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<PositionSyncCommand>(payload);
                 case GameCommandType.RandomSeedSync:
                     return MessageSerializer.DeserializePayload<RandomSeedSyncCommand>(payload);
+                case GameCommandType.DuplicantCommandRequest:
+                    return MessageSerializer.DeserializePayload<DuplicantCommandRequestCommand>(payload);
                 default:
                     return MessageSerializer.DeserializePayload<GameCommand>(payload);
             }
@@ -355,6 +464,9 @@ namespace Antigravity.Core.Commands
                         break;
                     case GameCommandType.RandomSeedSync:
                         ExecuteRandomSeedSyncCommand(command as RandomSeedSyncCommand);
+                        break;
+                    case GameCommandType.DuplicantCommandRequest:
+                        ExecuteDuplicantCommandRequest(command as DuplicantCommandRequestCommand);
                         break;
                     default:
                         Debug.LogWarning($"[Antigravity] Unknown command type: {command.Type}");
@@ -1160,6 +1272,24 @@ namespace Antigravity.Core.Commands
         {
             if (cmd == null) return;
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.ApplyRandomSeed(cmd);
+        }
+
+        /// <summary>
+        /// Execute a DuplicantCommandRequest - only Host processes these.
+        /// </summary>
+        private static void ExecuteDuplicantCommandRequest(DuplicantCommandRequestCommand cmd)
+        {
+            if (cmd == null) return;
+            
+            // Only Host processes these requests
+            if (!MultiplayerState.IsHost)
+            {
+                Debug.LogWarning($"[Antigravity] Client received DuplicantCommandRequest - ignoring (should only go to Host)");
+                return;
+            }
+            
+            Debug.Log($"[Antigravity] Host processing DuplicantCommandRequest: {cmd.RequestType} for {cmd.DuplicantName}");
+            Antigravity.Core.Sync.DuplicantSyncManager.Instance.ProcessClientRequest(cmd);
         }
 
         private static long GetCurrentTick()

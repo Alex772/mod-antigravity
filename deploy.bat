@@ -39,7 +39,10 @@ copy /Y "%BUILD_DIR%\Antigravity.Server.dll" "%DESTINO%\" >nul
 copy /Y "%BUILD_DIR%\LiteNetLib.dll" "%DESTINO%\" >nul
 
 :: Copiar metadados
-copy /Y "%PROJETO%\mod.yaml" "%DESTINO%\" >nul
+:: Para builds DEBUG, modificar o titulo do mod para facilitar identificação
+echo title: "Antigravity Multiplayer [DEV]" > "%DESTINO%\mod.yaml"
+echo description: "Play Oxygen Not Included with your friends! This mod adds multiplayer support allowing multiple players to control the same colony. [DEBUG BUILD - LOCAL TEST ENABLED]" >> "%DESTINO%\mod.yaml"
+echo staticID: "Antigravity.Multiplayer" >> "%DESTINO%\mod.yaml"
 copy /Y "%PROJETO%\mod_info.yaml" "%DESTINO%\" >nul
 
 :: Copiar assets

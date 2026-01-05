@@ -183,6 +183,11 @@ namespace Antigravity.Core.Network
         bool SendToAll(byte[] data, SendReliability reliability = SendReliability.Reliable);
 
         /// <summary>
+        /// Send data to all connected players except the specified one.
+        /// </summary>
+        bool SendToAllExcept(PlayerId except, byte[] data, SendReliability reliability = SendReliability.Reliable);
+
+        /// <summary>
         /// Send data to a specific player.
         /// </summary>
         bool SendTo(PlayerId target, byte[] data, SendReliability reliability = SendReliability.Reliable);

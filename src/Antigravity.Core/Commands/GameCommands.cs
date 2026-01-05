@@ -72,6 +72,7 @@ namespace Antigravity.Core.Commands
         DuplicantChecksum = 114,    // Checksum verification
         PositionSync = 115,         // Lightweight position sync
         RandomSeedSync = 116,       // Random seed synchronization
+        DuplicantCommandRequest = 117, // Client requests action from Host
         
         // Generic
         Custom = 100
@@ -407,5 +408,32 @@ namespace Antigravity.Core.Commands
         public long GameTick { get; set; }
 
         public RandomSeedSyncCommand() : base(GameCommandType.RandomSeedSync) { }
+    }
+
+    /// <summary>
+    /// Types of requests a client can send to the Host.
+    /// </summary>
+    public enum DuplicantRequestType
+    {
+        MoveTo = 0,         // Request Duplicant move to a cell
+        AssignChore = 1,    // Request Duplicant do a specific chore
+        CancelChore = 2,    // Request cancellation of current chore
+        SetPriority = 3     // Request priority change
+    }
+
+    /// <summary>
+    /// Command sent from CLIENT to HOST requesting an action on a Duplicant.
+    /// The Host validates and executes the request, then syncs the result.
+    /// </summary>
+    [Serializable]
+    public class DuplicantCommandRequestCommand : GameCommand
+    {
+        public string DuplicantName { get; set; }
+        public DuplicantRequestType RequestType { get; set; }
+        public int TargetCell { get; set; }      // For MoveTo
+        public string ChoreTypeId { get; set; }  // For AssignChore
+        public int TargetObjectId { get; set; }  // For AssignChore (target object)
+
+        public DuplicantCommandRequestCommand() : base(GameCommandType.DuplicantCommandRequest) { }
     }
 }

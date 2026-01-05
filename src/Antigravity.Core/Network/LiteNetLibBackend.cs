@@ -100,11 +100,21 @@ namespace Antigravity.Core.Network
                 try
                 {
                     var playerId = PlayerId.FromLiteNetLib(peer.Id);
-                    int length = reader.AvailableBytes;
-                    byte[] data = new byte[length];
-                    reader.GetBytes(data, length);
                     
-                    OnDataReceived?.Invoke(this, new DataReceivedEventArgs(playerId, data));
+                    // Read the length prefix (4 bytes) that was added by SendToAll/SendTo
+                    int length = reader.GetInt();
+                    if (length > 0 && length <= reader.AvailableBytes)
+                    {
+                        byte[] data = new byte[length];
+                        reader.GetBytes(data, length);
+                        
+                        Debug.Log($"[Antigravity] LiteNetLib received {length} bytes from peer {peer.Id}");
+                        OnDataReceived?.Invoke(this, new DataReceivedEventArgs(playerId, data));
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Antigravity] Invalid packet length: {length}, available: {reader.AvailableBytes}");
+                    }
                 }
                 finally
                 {
@@ -217,6 +227,47 @@ namespace Antigravity.Core.Network
                 peer.Send(writer, deliveryMethod);
             }
 
+            return true;
+        }
+        
+        /// <summary>
+        /// Send data to all connected players except the specified one.
+        /// </summary>
+        public bool SendToAllExcept(PlayerId except, byte[] data, SendReliability reliability = SendReliability.Reliable)
+        {
+            if (_netManager == null || !IsConnected) return false;
+
+            var deliveryMethod = reliability == SendReliability.Reliable 
+                ? DeliveryMethod.ReliableOrdered 
+                : DeliveryMethod.Unreliable;
+
+            var writer = new NetDataWriter();
+            writer.Put(data.Length);
+            writer.Put(data);
+
+            int exceptPeerId = except.AsPeerId;
+            int sentCount = 0;
+            int skipped = 0;
+            
+            Debug.Log($"[Antigravity] SendToAllExcept: except.Value={except.Value}, except.AsPeerId={exceptPeerId}, total peers={_netManager.ConnectedPeerList.Count}");
+            
+            foreach (var peer in _netManager.ConnectedPeerList)
+            {
+                Debug.Log($"[Antigravity] Checking peer.Id={peer.Id} vs exceptPeerId={exceptPeerId}");
+                if (peer.Id != exceptPeerId)
+                {
+                    peer.Send(writer, deliveryMethod);
+                    sentCount++;
+                    Debug.Log($"[Antigravity] Sent to peer {peer.Id}");
+                }
+                else
+                {
+                    skipped++;
+                    Debug.Log($"[Antigravity] Skipped peer {peer.Id} (matches sender)");
+                }
+            }
+
+            Debug.Log($"[Antigravity] SendToAllExcept complete: sent to {sentCount}, skipped {skipped}");
             return true;
         }
 

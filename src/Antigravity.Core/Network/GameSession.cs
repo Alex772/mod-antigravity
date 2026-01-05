@@ -361,20 +361,40 @@ namespace Antigravity.Core.Network
 
         private static void SendToAllClients<T>(MessageType type, T payload)
         {
-            var message = MessageSerializer.CreateMessage(
-                type, 
-                payload,
-                SteamNetworkManager.LocalSteamId.m_SteamID
-            );
-
+            // Get sender ID based on current backend
+            ulong senderId = NetworkBackendManager.IsLocalMode 
+                ? (ulong)NetworkBackendManager.LocalPlayerId.Value 
+                : SteamNetworkManager.LocalSteamId.m_SteamID;
+                
+            var message = MessageSerializer.CreateMessage(type, payload, senderId);
             byte[] data = MessageSerializer.Serialize(message);
-            SteamNetworkManager.SendToAll(data);
+            
+            // Route to appropriate backend
+            if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
+            {
+                NetworkBackendManager.SendToAll(data);
+                Debug.Log($"[Antigravity] SendToAllClients via LiteNetLib: {type}, {data.Length} bytes");
+            }
+            else
+            {
+                SteamNetworkManager.SendToAll(data);
+            }
         }
 
         private static void SendToHost(NetworkMessage message)
         {
             byte[] data = MessageSerializer.Serialize(message);
-            SteamNetworkManager.SendTo(SteamNetworkManager.HostSteamId, data);
+            
+            // Route to appropriate backend
+            if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
+            {
+                NetworkBackendManager.SendTo(NetworkBackendManager.HostPlayerId, data);
+                Debug.Log($"[Antigravity] SendToHost via LiteNetLib: {message.Type}, {data.Length} bytes");
+            }
+            else
+            {
+                SteamNetworkManager.SendTo(SteamNetworkManager.HostSteamId, data);
+            }
         }
 
         private const int CHUNK_SIZE = 64 * 1024; // 64 KB chunks
@@ -405,14 +425,28 @@ namespace Antigravity.Core.Network
                     Data = chunkData
                 };
 
+                // Get sender ID based on current backend
+                ulong senderId = NetworkBackendManager.IsLocalMode 
+                    ? (ulong)NetworkBackendManager.LocalPlayerId.Value 
+                    : SteamNetworkManager.LocalSteamId.m_SteamID;
+
                 var message = MessageSerializer.CreateMessage(
                     MessageType.WorldDataChunk,
                     chunk,
-                    SteamNetworkManager.LocalSteamId.m_SteamID
+                    senderId
                 );
 
                 byte[] data = MessageSerializer.Serialize(message);
-                SteamNetworkManager.SendToAll(data);
+                
+                // Route to appropriate backend
+                if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
+                {
+                    NetworkBackendManager.SendToAll(data);
+                }
+                else
+                {
+                    SteamNetworkManager.SendToAll(data);
+                }
 
                 Debug.Log($"[Antigravity] Sent chunk {i + 1}/{chunkCount} ({size} bytes)");
             }

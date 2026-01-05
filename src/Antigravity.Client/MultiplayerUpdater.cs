@@ -74,14 +74,24 @@ namespace Antigravity.Client
 
         private void Update()
         {
-            // Poll for network messages
+            // Poll for network messages (Steam mode)
             if (SteamNetworkManager.IsConnected)
             {
                 SteamNetworkManager.Update();
             }
+            
+            // Poll for network messages (Local mode - LiteNetLib)
+            if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.IsConnected)
+            {
+                NetworkBackendManager.Update();
+            }
 
             // Process any pending commands from other players
-            if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded)
+            // In local mode (terminal client testing), always process commands
+            bool shouldProcessCommands = (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded)
+                || (NetworkBackendManager.IsLocalMode && NetworkBackendManager.IsConnected);
+            
+            if (shouldProcessCommands)
             {
                 CommandManager.ProcessPendingCommands();
 

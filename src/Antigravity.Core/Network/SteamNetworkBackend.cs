@@ -65,6 +65,23 @@ namespace Antigravity.Core.Network
             return SteamNetworkManager.SendToAll(data, sendType);
         }
 
+        public bool SendToAllExcept(PlayerId except, byte[] data, SendReliability reliability = SendReliability.Reliable)
+        {
+            var sendType = reliability == SendReliability.Reliable 
+                ? EP2PSend.k_EP2PSendReliable 
+                : EP2PSend.k_EP2PSendUnreliable;
+            
+            // Send to all connected players except the one specified
+            foreach (var player in SteamNetworkManager.ConnectedPlayers)
+            {
+                if (player.m_SteamID != except.Value)
+                {
+                    SteamNetworkManager.SendTo(player, data, sendType);
+                }
+            }
+            return true;
+        }
+
         public bool SendTo(PlayerId target, byte[] data, SendReliability reliability = SendReliability.Reliable)
         {
             var sendType = reliability == SendReliability.Reliable 

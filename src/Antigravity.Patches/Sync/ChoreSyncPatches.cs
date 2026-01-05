@@ -31,13 +31,25 @@ namespace Antigravity.Patches.Sync
                 MinionIdentity minion = __instance.GetComponent<MinionIdentity>();
                 if (minion == null) return;
 
+                if (chore.choreType == null) return;
+                
+                // Some chores might not have a target (e.g. Idle)
+                int targetCell = -1;
+                int targetId = -1;
+
+                if (chore.target != null && chore.target.gameObject != null)
+                {
+                    targetCell = Grid.PosToCell(chore.target.gameObject);
+                    targetId = chore.target.gameObject.GetInstanceID();
+                }
+
                 // Create command
                 var cmd = new ChoreStartCommand
                 {
                     DuplicantName = minion.name,
                     ChoreTypeId = chore.choreType.Id,
-                    TargetCell = Grid.PosToCell(chore.target.gameObject),
-                    TargetId = chore.target.gameObject.GetInstanceID()
+                    TargetCell = targetCell,
+                    TargetId = targetId
                 };
 
                 // Send
