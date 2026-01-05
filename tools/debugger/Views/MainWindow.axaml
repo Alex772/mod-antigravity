@@ -401,6 +401,12 @@
                                                         <!-- Controls -->
                                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2">
                                                             <Button Padding="4,2" Background="Transparent"
+                                                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StartEditPacketCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="Edit JSON">
+                                                                <TextBlock Text="✏️" FontSize="8"/>
+                                                            </Button>
+                                                            <Button Padding="4,2" Background="Transparent"
                                                                     Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).MovePacketUpCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <TextBlock Text="▲" FontSize="8" Foreground="#89b4fa"/>
@@ -428,12 +434,39 @@
                             </ScrollViewer>
                         </Border>
                         
-                        <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                        <!-- JSON Editor Panel (shows when editing) -->
+                        <Border Grid.Row="1" Classes="card" Margin="0,8,0,0" 
+                                IsVisible="{Binding IsEditingPacket}"
+                                Background="#1a1b26" BorderBrush="#89b4fa" BorderThickness="2">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="✏️" FontSize="14"/>
+                                    <TextBlock Text="EDIT JSON" FontWeight="Bold" Foreground="#89b4fa"/>
+                                    <TextBlock Text="{Binding SelectedPacketInGroup.CommandTypeName}" Foreground="#f9e2af"/>
+                                </StackPanel>
+                                
+                                <TextBox Grid.Row="1" Text="{Binding EditingPacketJson}" 
+                                         FontFamily="Consolas" FontSize="11" AcceptsReturn="True"
+                                         TextWrapping="Wrap" Background="#11111b" Foreground="#a6e3a1"
+                                         Height="180" Margin="0,8,0,0"/>
+                                
+                                <TextBlock Grid.Row="2" Text="{Binding JsonEditError}" 
+                                           Foreground="#f38ba8" FontSize="10" Margin="0,4,0,0"
+                                           IsVisible="{Binding JsonEditError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" HorizontalAlignment="Right">
+                                    <Button Command="{Binding CancelEditPacketCommand}">Cancel</Button>
+                                    <Button Command="{Binding ApplyJsonChangesCommand}" Classes="primary">✓ Apply</Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        
+                        <StackPanel Grid.Row="2" Margin="0,8,0,0" IsVisible="{Binding !IsEditingPacket}">
                             <TextBlock Text="Group Name:" FontSize="11" Foreground="#a6adc8" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding NewGroupName}" Padding="8,6"/>
                         </StackPanel>
                         
-                        <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0">
+                        <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0" IsVisible="{Binding !IsEditingPacket}">
                             <Button Command="{Binding CreateGroupCommand}" Classes="success" HorizontalAlignment="Stretch">
                                 📁 Create Group
                             </Button>

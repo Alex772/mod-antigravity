@@ -60,15 +60,46 @@ public static class MessageTypes
 
 public static class GameCommandTypes
 {
+    // Maps GameCommandType enum values to human-readable names
+    // Must match GameCommandType in Antigravity.Core.Commands.GameCommands
     public static readonly Dictionary<int, string> Names = new()
     {
-        { 10, "Dig" }, { 11, "CancelDig" }, { 20, "Build" }, { 21, "CancelBuild" }, { 22, "UtilityBuild" },
-        { 30, "Deconstruct" }, { 31, "CancelDeconstruct" }, { 40, "Mop" }, { 41, "CancelMop" },
-        { 50, "Clear" }, { 51, "CancelClear" }, { 60, "Harvest" }, { 61, "CancelHarvest" },
-        { 70, "Disinfect" }, { 71, "CancelDisinfect" }, { 80, "Capture" }, { 81, "CancelCapture" },
-        { 85, "PauseGame" }, { 86, "UnpauseGame" }, { 87, "SetGameSpeed" }, { 88, "SetBuildingPriority" },
-        { 89, "SetStorageFilter" }, { 90, "SetDoorState" }, { 91, "PositionSync" }, { 92, "NavigateTo" },
-        { 93, "ChoreStart" }, { 94, "DuplicantChecksum" }
+        // Building commands
+        { 1, "Build" }, { 2, "CancelBuild" }, { 3, "Deconstruct" },
+        // Digging commands
+        { 10, "Dig" }, { 11, "CancelDig" },
+        // Priority
+        { 20, "SetPriority" },
+        // Errand
+        { 30, "SetErrand" }, { 31, "CancelErrand" },
+        // Door
+        { 40, "SetDoorState" },
+        // Copy
+        { 50, "CopySettings" },
+        // Speed/Pause
+        { 60, "SetGameSpeed" }, { 61, "PauseGame" }, { 62, "UnpauseGame" },
+        // Save
+        { 70, "SaveGame" },
+        // Mop/Clear
+        { 80, "Mop" }, { 81, "Clear" },
+        // Harvest
+        { 82, "Harvest" }, { 83, "CancelHarvest" },
+        // Disinfect
+        { 84, "Disinfect" },
+        // Capture
+        { 85, "Capture" }, { 86, "CancelCapture" },
+        // Bulk Priority
+        { 87, "SetBulkPriority" },
+        // Building UI commands
+        { 88, "SetBuildingPriority" }, { 89, "ToggleBuildingDisinfect" }, { 90, "SetStorageFilter" },
+        // Utility
+        { 91, "UtilityBuild" }, { 92, "DisconnectUtility" }, { 93, "SetStorageCapacity" },
+        // Duplicant sync
+        { 110, "ChoreStart" }, { 111, "ChoreEnd" }, { 112, "NavigateTo" },
+        { 113, "DuplicantFullState" }, { 114, "DuplicantChecksum" }, { 115, "PositionSync" },
+        { 116, "RandomSeedSync" }, { 117, "DuplicantCommandRequest" },
+        // Generic
+        { 100, "Custom" }
     };
     public static string GetName(int type) => Names.GetValueOrDefault(type, $"Cmd({type})");
 }

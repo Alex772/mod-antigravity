@@ -145,5 +145,38 @@ namespace Antigravity.Patches.Commands
                 }
             }
         }
+
+        /// <summary>
+        /// Patch for StorageLocker.set_UserMaxCapacity - syncs storage max capacity changes
+        /// </summary>
+        [HarmonyPatch(typeof(StorageLocker), nameof(StorageLocker.UserMaxCapacity), MethodType.Setter)]
+        public static class StorageLocker_UserMaxCapacity_Patch
+        {
+            public static void Postfix(StorageLocker __instance, float value)
+            {
+                if (!MultiplayerState.IsMultiplayerSession) return;
+                if (!MultiplayerState.IsGameLoaded) return;
+                if (CommandManager.IsExecutingRemoteCommand) return;
+
+                try
+                {
+                    int cell = Grid.PosToCell(__instance.transform.GetPosition());
+                    if (!Grid.IsValidCell(cell)) return;
+
+                    Debug.Log($"[Antigravity] SEND: StorageCapacity cell={cell} capacity={value}");
+
+                    var cmd = new StorageCapacityCommand
+                    {
+                        Cell = cell,
+                        UserMaxCapacity = value
+                    };
+                    CommandManager.SendCommand(cmd);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"[Antigravity] Failed to send StorageCapacity: {ex.Message}");
+                }
+            }
+        }
     }
 }

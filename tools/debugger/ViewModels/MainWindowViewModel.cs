@@ -357,11 +357,28 @@ public partial class MainWindowViewModel : ViewModelBase
             var jsonDoc = System.Text.Json.JsonDocument.Parse(EditingPacketJson);
             var compactJson = System.Text.Json.JsonSerializer.Serialize(jsonDoc);
             
-            // Rebuild RawData: [4 bytes length prefix] + [UTF8 JSON bytes]
+            // RawData format: [1b MessageType] + [8b SenderId] + [8b GameTick] + [4b PayloadLength] + [Payload]
+            // Header = 21 bytes, we need to preserve the first 17 bytes and rebuild from PayloadLength
+            var oldRawData = SelectedPacketInGroup.RawData;
+            if (oldRawData.Length < 21)
+            {
+                JsonEditError = "Invalid packet format - too short";
+                return;
+            }
+            
             var jsonBytes = System.Text.Encoding.UTF8.GetBytes(compactJson);
-            var newRawData = new byte[4 + jsonBytes.Length];
-            BitConverter.GetBytes(jsonBytes.Length).CopyTo(newRawData, 0);
-            jsonBytes.CopyTo(newRawData, 4);
+            
+            // Build new RawData: preserve header (17 bytes) + new length (4 bytes) + new JSON
+            var newRawData = new byte[17 + 4 + jsonBytes.Length];
+            
+            // Copy header (MessageType + SenderId + GameTick)
+            Array.Copy(oldRawData, 0, newRawData, 0, 17);
+            
+            // Write new payload length
+            BitConverter.GetBytes(jsonBytes.Length).CopyTo(newRawData, 17);
+            
+            // Write new JSON payload
+            jsonBytes.CopyTo(newRawData, 21);
             
             // Update packet
             SelectedPacketInGroup.PayloadJson = compactJson;
@@ -377,7 +394,7 @@ public partial class MainWindowViewModel : ViewModelBase
             
             IsEditingPacket = false;
             JsonEditError = "";
-            ConnectionStatus = $"Applied changes to {SelectedPacketInGroup.CommandTypeName}";
+            ConnectionStatus = $"Applied changes to {SelectedPacketInGroup.CommandTypeName} ({newRawData.Length} B)";
         }
         catch (System.Text.Json.JsonException ex)
         {

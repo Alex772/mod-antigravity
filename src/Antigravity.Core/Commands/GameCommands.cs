@@ -64,6 +64,12 @@ namespace Antigravity.Core.Commands
         // Utility build (wires, pipes - uses path instead of single cell)
         UtilityBuild = 91,
         
+        // Disconnect utility (cut wires/pipes)
+        DisconnectUtility = 92,
+        
+        // Storage capacity
+        SetStorageCapacity = 93,
+        
         // Duplicant synchronization
         ChoreStart = 110,           // Duplicant started a chore
         ChoreEnd = 111,             // Duplicant ended a chore
@@ -303,6 +309,31 @@ namespace Antigravity.Core.Commands
         public string[] AcceptedTags { get; set; }
 
         public StorageFilterCommand() : base(GameCommandType.SetStorageFilter) { }
+    }
+
+    /// <summary>
+    /// Storage capacity command - for max capacity changes via UI slider
+    /// </summary>
+    [Serializable]
+    public class StorageCapacityCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public float UserMaxCapacity { get; set; }
+
+        public StorageCapacityCommand() : base(GameCommandType.SetStorageCapacity) { }
+    }
+
+    /// <summary>
+    /// Disconnect utility command - for cutting wire/pipe connections
+    /// </summary>
+    [Serializable]
+    public class DisconnectCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public int RemoveConnections { get; set; }  // UtilityConnections flags cast to int
+        public string FilterLayer { get; set; }     // WIRES, LIQUIDCONDUIT, GASCONDUIT, SOLIDCONDUIT, LOGIC
+
+        public DisconnectCommand() : base(GameCommandType.DisconnectUtility) { }
     }
 
     /// <summary>

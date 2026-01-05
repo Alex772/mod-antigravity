@@ -268,6 +268,10 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<StorageFilterCommand>(payload);
                 case GameCommandType.UtilityBuild:
                     return MessageSerializer.DeserializePayload<UtilityBuildCommand>(payload);
+                case GameCommandType.DisconnectUtility:
+                    return MessageSerializer.DeserializePayload<DisconnectCommand>(payload);
+                case GameCommandType.SetStorageCapacity:
+                    return MessageSerializer.DeserializePayload<StorageCapacityCommand>(payload);
                 case GameCommandType.ChoreStart:
                     return MessageSerializer.DeserializePayload<ChoreStartCommand>(payload);
                 case GameCommandType.ChoreEnd:
@@ -443,6 +447,12 @@ namespace Antigravity.Core.Commands
                         break;
                     case GameCommandType.UtilityBuild:
                         ExecuteUtilityBuildCommand(command as UtilityBuildCommand);
+                        break;
+                    case GameCommandType.DisconnectUtility:
+                        ExecuteDisconnectCommand(command as DisconnectCommand);
+                        break;
+                    case GameCommandType.SetStorageCapacity:
+                        ExecuteStorageCapacityCommand(command as StorageCapacityCommand);
                         break;
                     case GameCommandType.ChoreStart:
                         ExecuteChoreStartCommand(command as ChoreStartCommand);
@@ -1016,6 +1026,21 @@ namespace Antigravity.Core.Commands
                     if (filterable != null)
                     {
                         filterable.UpdateFilters(tags);
+                        
+                        // Force refresh the UI if this object is currently selected
+                        try
+                        {
+                            if (DetailsScreen.Instance != null && 
+                                SelectTool.Instance != null && 
+                                SelectTool.Instance.selected != null &&
+                                SelectTool.Instance.selected.gameObject == obj)
+                            {
+                                // Trigger a refresh by re-setting the target
+                                DetailsScreen.Instance.Refresh(obj);
+                            }
+                        }
+                        catch { }
+                        
                         break;
                     }
                 }
@@ -1023,6 +1048,50 @@ namespace Antigravity.Core.Commands
             catch (Exception ex)
             {
                 Debug.LogError($"[Antigravity] StorageFilter failed at cell {cmd.Cell}: {ex.Message}");
+            }
+        }
+
+        private static void ExecuteStorageCapacityCommand(StorageCapacityCommand cmd)
+        {
+            if (cmd == null) return;
+
+            Debug.Log($"[Antigravity] EXECUTE: StorageCapacity cell={cmd.Cell} capacity={cmd.UserMaxCapacity}");
+
+            try
+            {
+                if (!Grid.IsValidCell(cmd.Cell)) return;
+
+                // Find IUserControlledCapacity at cell (StorageLocker, Refrigerator, etc.)
+                for (int layer = 0; layer < 45; layer++)
+                {
+                    GameObject obj = Grid.Objects[cmd.Cell, layer];
+                    if (obj == null) continue;
+
+                    IUserControlledCapacity capacityControl = obj.GetComponent<IUserControlledCapacity>();
+                    if (capacityControl != null)
+                    {
+                        capacityControl.UserMaxCapacity = cmd.UserMaxCapacity;
+                        
+                        // Force refresh the UI if this object is currently selected
+                        try
+                        {
+                            if (DetailsScreen.Instance != null && 
+                                SelectTool.Instance != null && 
+                                SelectTool.Instance.selected != null &&
+                                SelectTool.Instance.selected.gameObject == obj)
+                            {
+                                DetailsScreen.Instance.Refresh(obj);
+                            }
+                        }
+                        catch { }
+                        
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Antigravity] StorageCapacity failed at cell {cmd.Cell}: {ex.Message}");
             }
         }
 
@@ -1290,6 +1359,85 @@ namespace Antigravity.Core.Commands
             
             Debug.Log($"[Antigravity] Host processing DuplicantCommandRequest: {cmd.RequestType} for {cmd.DuplicantName}");
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.ProcessClientRequest(cmd);
+        }
+
+        /// <summary>
+        /// Execute a disconnect utility command (cut wire/pipe connections).
+        /// </summary>
+        private static void ExecuteDisconnectCommand(DisconnectCommand cmd)
+        {
+            if (cmd == null) return;
+            if (!Grid.IsValidCell(cmd.Cell)) return;
+
+            Debug.Log($"[Antigravity] EXECUTE: DisconnectUtility cell={cmd.Cell} connections={cmd.RemoveConnections} layer={cmd.FilterLayer}");
+
+            try
+            {
+                var removeConnections = (UtilityConnections)cmd.RemoveConnections;
+                
+                // Find the correct utility object at this cell based on filter layer
+                ObjectLayer targetLayer = GetObjectLayerFromFilter(cmd.FilterLayer);
+                
+                // Search through layers for matching object
+                for (int layer = 0; layer < 45; layer++)
+                {
+                    GameObject obj = Grid.Objects[cmd.Cell, layer];
+                    if (obj == null) continue;
+
+                    var building = obj.GetComponent<Building>();
+                    if (building == null) continue;
+
+                    // Check if this matches our target filter layer
+                    string objFilterLayer = GetFilterLayerFromObjectLayer(building.Def.ObjectLayer);
+                    if (objFilterLayer.ToUpper() != cmd.FilterLayer.ToUpper() && cmd.FilterLayer.ToUpper() != "ALL")
+                        continue;
+
+                    // Get network manager
+                    var networkComponent = building.Def.BuildingComplete.GetComponent<IHaveUtilityNetworkMgr>();
+                    if (networkComponent.IsNullOrDestroyed()) continue;
+
+                    var networkMgr = networkComponent.GetNetworkManager();
+                    if (networkMgr == null) continue;
+
+                    // Get current connections and calculate new connections (remove specified)
+                    UtilityConnections currentConnections = networkMgr.GetConnections(cmd.Cell, is_physical_building: false);
+                    UtilityConnections newConnections = currentConnections & ~removeConnections;
+
+                    // Update the visual tile
+                    var tileVisualizer = obj.GetComponent<KAnimGraphTileVisualizer>();
+                    if (tileVisualizer != null)
+                    {
+                        tileVisualizer.UpdateConnections(newConnections);
+                        tileVisualizer.Refresh();
+                    }
+
+                    // Refresh the tile layer
+                    TileVisualizer.RefreshCell(cmd.Cell, building.Def.TileLayer, building.Def.ReplacementLayer);
+                    
+                    // Force rebuild networks
+                    networkMgr.ForceRebuildNetworks();
+                    
+                    Debug.Log($"[Antigravity] DisconnectUtility success: removed connections at cell {cmd.Cell}");
+                    break; // Found and processed the matching object
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Antigravity] DisconnectUtility failed at cell {cmd.Cell}: {ex.Message}");
+            }
+        }
+
+        private static ObjectLayer GetObjectLayerFromFilter(string filterLayer)
+        {
+            switch (filterLayer?.ToUpper())
+            {
+                case "WIRES": return ObjectLayer.Wire;
+                case "LIQUIDCONDUIT": return ObjectLayer.LiquidConduit;
+                case "GASCONDUIT": return ObjectLayer.GasConduit;
+                case "SOLIDCONDUIT": return ObjectLayer.SolidConduit;
+                case "LOGIC": return ObjectLayer.LogicWire;
+                default: return ObjectLayer.Building;
+            }
         }
 
         private static long GetCurrentTick()

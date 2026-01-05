@@ -53,20 +53,26 @@ public class CommandStorageService
     
     /// <summary>
     /// Save a group of packets as a command.
+    /// Packets are saved in REVERSE order so priority commands come before the main action (e.g., SetBuildingPriority before Dig).
     /// </summary>
     public string SaveGroup(PacketGroup group, string name = "")
     {
+        // Reverse order: last captured packet becomes first (index 0)
+        // This ensures SetBuildingPriority runs before Dig on replay
+        var reversedPackets = group.Packets.OrderByDescending(p => p.Id).ToList();
+        
         var saved = new SavedCommand
         {
             Name = name,
             CommandType = group.MainCommandName,
             GameTick = group.GameTick,
-            Packets = group.Packets.OrderBy(p => p.Id).Select((p, i) => new SavedPacketData
+            Packets = reversedPackets.Select((p, i) => new SavedPacketData
             {
                 Order = i,
                 CommandTypeName = p.CommandTypeName,
                 RawData = p.RawData,
-                PayloadJson = p.PayloadJson
+                PayloadJson = p.PayloadJson,
+                GameTick = p.GameTick
             }).ToList()
         };
         
