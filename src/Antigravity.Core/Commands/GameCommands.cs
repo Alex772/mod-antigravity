@@ -339,6 +339,7 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
+<<<<<<< HEAD
     /// Filterable command - for element filter changes (valves, pumps, etc.)
     /// </summary>
     [Serializable]
@@ -376,6 +377,8 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
+=======
+>>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
     /// Disconnect utility command - for cutting wire/pipe connections
     /// </summary>
     [Serializable]

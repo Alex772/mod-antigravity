@@ -98,9 +98,12 @@ public static class GameCommandTypes
         { 110, "ChoreStart" }, { 111, "ChoreEnd" }, { 112, "NavigateTo" },
         { 113, "DuplicantFullState" }, { 114, "DuplicantChecksum" }, { 115, "PositionSync" },
         { 116, "RandomSeedSync" }, { 117, "DuplicantCommandRequest" },
+<<<<<<< HEAD
         // World sync
         { 118, "ItemSync" },
         { 119, "ElementChange" },
+=======
+>>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
         // Generic
         { 100, "Custom" }
     };

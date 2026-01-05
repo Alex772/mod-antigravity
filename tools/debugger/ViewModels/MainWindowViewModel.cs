@@ -223,5 +223,350 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadSavedCommands();
     }
     
+<<<<<<< HEAD
     #endregion
+=======
+    private void AddPacket(CapturedPacket packet)
+    {
+        Packets.Insert(0, packet);
+        _currentSession.Packets.Add(packet);
+        lock (_pendingLock) { _pendingPackets.Add(packet); }
+    }
+    
+    private void ProcessPendingPackets()
+    {
+        List<CapturedPacket> packetsToProcess;
+        lock (_pendingLock)
+        {
+            if (_pendingPackets.Count == 0) return;
+            packetsToProcess = new List<CapturedPacket>(_pendingPackets);
+            _pendingPackets.Clear();
+        }
+        
+        var groups = packetsToProcess.GroupBy(p => p.GameTick > 0 ? p.GameTick : p.TimeString.GetHashCode());
+        foreach (var group in groups.OrderByDescending(g => g.Key))
+            PacketGroups.Insert(0, PacketGroup.FromPackets(group));
+    }
+    
+    private void LoadSavedCommands()
+    {
+        SavedCommands.Clear();
+        foreach (var cmd in _commandStorage.LoadAllCommands())
+            SavedCommands.Add(cmd);
+    }
+    
+    [RelayCommand]
+    private void ToggleConnection()
+    {
+        if (IsConnected) _networkService.Disconnect();
+        else { ConnectionStatus = "Connecting..."; _networkService.Connect(HostAddress, HostPort); }
+    }
+    
+    [RelayCommand]
+    private void ReplaySelected()
+    {
+        if (SelectedPacket == null || !IsConnected) return;
+        _networkService.SendRaw(SelectedPacket.RawData);
+        ConnectionStatus = $"Replayed: {SelectedPacket.CommandTypeName}";
+    }
+    
+    [RelayCommand]
+    private void ReplayGroup()
+    {
+        if (SelectedGroup == null || !IsConnected) return;
+        foreach (var packet in SelectedGroup.Packets.OrderBy(p => p.Id))
+            _networkService.SendRaw(packet.RawData);
+        ConnectionStatus = $"Replayed group: {SelectedGroup.MainCommandName} ({SelectedGroup.PacketCount} packets)";
+    }
+    
+    [RelayCommand]
+    private void SaveSelectedPacket()
+    {
+        if (SelectedPacket == null) return;
+        _commandStorage.SavePacket(SelectedPacket);
+        LoadSavedCommands();
+        ConnectionStatus = $"Saved: {SelectedPacket.CommandTypeName}";
+    }
+    
+    [RelayCommand]
+    private void SaveSelectedGroup()
+    {
+        if (SelectedGroup == null) return;
+        _commandStorage.SaveGroup(SelectedGroup);
+        LoadSavedCommands();
+        ConnectionStatus = $"Saved group: {SelectedGroup.MainCommandName} ({SelectedGroup.PacketCount} packets)";
+    }
+    
+    [RelayCommand]
+    private void ReplaySavedCommand()
+    {
+        if (SelectedSavedCommand == null || !IsConnected) return;
+        foreach (var packet in SelectedSavedCommand.Packets.OrderBy(p => p.Order))
+            _networkService.SendRaw(packet.RawData);
+        ConnectionStatus = $"Replayed saved: {SelectedSavedCommand.DisplayName} ({SelectedSavedCommand.PacketCount} packets)";
+    }
+    
+    [RelayCommand]
+    private void DeleteSavedCommand()
+    {
+        if (SelectedSavedCommand == null) return;
+        var files = _commandStorage.GetSavedCommands();
+        var file = files.FirstOrDefault(f => f.Contains(SelectedSavedCommand.Id) || 
+            f.Contains($"{SelectedSavedCommand.CommandType}_{SelectedSavedCommand.CreatedAt:yyyy-MM-dd_HH-mm-ss}"));
+        if (file != null) _commandStorage.DeleteCommand(file);
+        LoadSavedCommands();
+        SelectedSavedCommand = null;
+        ConnectionStatus = "Deleted saved command";
+    }
+    
+    [RelayCommand]
+    private void RefreshSavedCommands() => LoadSavedCommands();
+    
+    [RelayCommand]
+    private void ClearPackets()
+    {
+        Packets.Clear();
+        PacketGroups.Clear();
+        _currentSession = new Session { HostAddress = _networkService.ConnectedAddress ?? "" };
+        UpdateStats();
+    }
+    
+    /// <summary>
+    /// Add selected command's packets to the group builder.
+    /// </summary>
+    [RelayCommand]
+    private void AddToGroupBuilder()
+    {
+        if (SelectedSavedCommand == null) return;
+        
+        // Add all packets from this command
+        foreach (var packet in SelectedSavedCommand.Packets)
+        {
+            var newPacket = new SavedPacketData
+            {
+                Order = PacketsForGroup.Count,
+                CommandTypeName = packet.CommandTypeName,
+                RawData = packet.RawData,
+                PayloadJson = packet.PayloadJson,
+                GameTick = packet.GameTick
+            };
+            PacketsForGroup.Add(newPacket);
+        }
+        
+        if (!CommandsForGroup.Contains(SelectedSavedCommand))
+            CommandsForGroup.Add(SelectedSavedCommand);
+            
+        ConnectionStatus = $"Added {SelectedSavedCommand.PacketCount} packets ({PacketsForGroup.Count} total)";
+    }
+    
+    /// <summary>
+    /// Remove a specific packet from the group builder.
+    /// </summary>
+    [RelayCommand]
+    private void RemovePacketFromGroup(SavedPacketData? packet)
+    {
+        if (packet != null && PacketsForGroup.Contains(packet))
+        {
+            PacketsForGroup.Remove(packet);
+            ReorderPackets();
+            ConnectionStatus = $"Removed packet ({PacketsForGroup.Count} remaining)";
+        }
+    }
+    
+    /// <summary>
+    /// Move packet up in the list.
+    /// </summary>
+    [RelayCommand]
+    private void MovePacketUp(SavedPacketData? packet)
+    {
+        if (packet == null) return;
+        var index = PacketsForGroup.IndexOf(packet);
+        if (index > 0)
+        {
+            PacketsForGroup.Move(index, index - 1);
+            ReorderPackets();
+        }
+    }
+    
+    /// <summary>
+    /// Move packet down in the list.
+    /// </summary>
+    [RelayCommand]
+    private void MovePacketDown(SavedPacketData? packet)
+    {
+        if (packet == null) return;
+        var index = PacketsForGroup.IndexOf(packet);
+        if (index < PacketsForGroup.Count - 1)
+        {
+            PacketsForGroup.Move(index, index + 1);
+            ReorderPackets();
+        }
+    }
+    
+    private void ReorderPackets()
+    {
+        for (int i = 0; i < PacketsForGroup.Count; i++)
+            PacketsForGroup[i].Order = i;
+    }
+    
+    /// <summary>
+    /// Remove a command from the group builder list (and its packets).
+    /// </summary>
+    [RelayCommand]
+    private void RemoveFromGroupBuilder(SavedCommand? command)
+    {
+        if (command != null && CommandsForGroup.Contains(command))
+        {
+            CommandsForGroup.Remove(command);
+            ConnectionStatus = $"Removed from group ({CommandsForGroup.Count} commands)";
+        }
+    }
+    
+    /// <summary>
+    /// Clear the group builder list.
+    /// </summary>
+    [RelayCommand]
+    private void ClearGroupBuilder()
+    {
+        CommandsForGroup.Clear();
+        PacketsForGroup.Clear();
+        NewGroupName = "";
+        SelectedPacketInGroup = null;
+        ConnectionStatus = "Group builder cleared";
+    }
+    
+    /// <summary>
+    /// Create a new group from the packets in PacketsForGroup.
+    /// </summary>
+    [RelayCommand]
+    private void CreateGroup()
+    {
+        if (PacketsForGroup.Count == 0) return;
+        
+        var newGroup = new SavedCommand
+        {
+            Name = string.IsNullOrWhiteSpace(NewGroupName) ? $"Custom Group ({PacketsForGroup.Count} packets)" : NewGroupName,
+            CommandType = "Group",
+            IsGroup = true,
+            SourceCommandIds = CommandsForGroup.Select(c => c.Id).ToList(),
+            GameTick = PacketsForGroup.First().GameTick,
+            Packets = PacketsForGroup.Select((p, i) => new SavedPacketData
+            {
+                Order = i,
+                CommandTypeName = p.CommandTypeName,
+                RawData = p.RawData,
+                PayloadJson = p.PayloadJson,
+                GameTick = p.GameTick
+            }).ToList()
+        };
+        
+        _commandStorage.SaveCommand(newGroup);
+        LoadSavedCommands();
+        CommandsForGroup.Clear();
+        PacketsForGroup.Clear();
+        NewGroupName = "";
+        SelectedPacketInGroup = null;
+        ConnectionStatus = $"Created group: {newGroup.DisplayName} ({newGroup.PacketCount} packets)";
+    }
+    
+    /// <summary>
+    /// Start editing the selected packet's JSON.
+    /// </summary>
+    [RelayCommand]
+    private void StartEditPacket(SavedPacketData? packet)
+    {
+        if (packet == null) return;
+        SelectedPacketInGroup = packet;
+        EditingPacketJson = FormatJson(packet.PayloadJson);
+        IsEditingPacket = true;
+        JsonEditError = "";
+        ConnectionStatus = $"Editing: {packet.CommandTypeName}";
+    }
+    
+    /// <summary>
+    /// Apply the edited JSON to the selected packet.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyJsonChanges()
+    {
+        if (SelectedPacketInGroup == null || string.IsNullOrWhiteSpace(EditingPacketJson)) return;
+        
+        try
+        {
+            // Validate JSON
+            var jsonDoc = System.Text.Json.JsonDocument.Parse(EditingPacketJson);
+            var compactJson = System.Text.Json.JsonSerializer.Serialize(jsonDoc);
+            
+            // RawData format: [1b MessageType] + [8b SenderId] + [8b GameTick] + [4b PayloadLength] + [Payload]
+            // Header = 21 bytes, we need to preserve the first 17 bytes and rebuild from PayloadLength
+            var oldRawData = SelectedPacketInGroup.RawData;
+            if (oldRawData.Length < 21)
+            {
+                JsonEditError = "Invalid packet format - too short";
+                return;
+            }
+            
+            var jsonBytes = System.Text.Encoding.UTF8.GetBytes(compactJson);
+            
+            // Build new RawData: preserve header (17 bytes) + new length (4 bytes) + new JSON
+            var newRawData = new byte[17 + 4 + jsonBytes.Length];
+            
+            // Copy header (MessageType + SenderId + GameTick)
+            Array.Copy(oldRawData, 0, newRawData, 0, 17);
+            
+            // Write new payload length
+            BitConverter.GetBytes(jsonBytes.Length).CopyTo(newRawData, 17);
+            
+            // Write new JSON payload
+            jsonBytes.CopyTo(newRawData, 21);
+            
+            // Update packet
+            SelectedPacketInGroup.PayloadJson = compactJson;
+            SelectedPacketInGroup.RawData = newRawData;
+            
+            // Refresh the list to show updated size
+            var index = PacketsForGroup.IndexOf(SelectedPacketInGroup);
+            if (index >= 0)
+            {
+                PacketsForGroup.RemoveAt(index);
+                PacketsForGroup.Insert(index, SelectedPacketInGroup);
+            }
+            
+            IsEditingPacket = false;
+            JsonEditError = "";
+            ConnectionStatus = $"Applied changes to {SelectedPacketInGroup.CommandTypeName} ({newRawData.Length} B)";
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            JsonEditError = $"Invalid JSON: {ex.Message}";
+        }
+    }
+    
+    /// <summary>
+    /// Cancel editing and discard changes.
+    /// </summary>
+    [RelayCommand]
+    private void CancelEditPacket()
+    {
+        IsEditingPacket = false;
+        EditingPacketJson = "";
+        JsonEditError = "";
+        ConnectionStatus = "Edit cancelled";
+    }
+    
+    private string FormatJson(string json)
+    {
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(json);
+            return System.Text.Json.JsonSerializer.Serialize(doc, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return json;
+        }
+    }
+    
+    private void UpdateStats() => StatsText = $"↓{_currentSession.Stats.PacketsReceived} ↑{_currentSession.Stats.PacketsSent}";
+>>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
 }
