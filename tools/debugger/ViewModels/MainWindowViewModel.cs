@@ -224,6 +224,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     #endregion
 =======
     private void AddPacket(CapturedPacket packet)
@@ -569,4 +570,7 @@ public partial class MainWindowViewModel : ViewModelBase
     
     private void UpdateStats() => StatsText = $"↓{_currentSession.Stats.PacketsReceived} ↑{_currentSession.Stats.PacketsSent}";
 >>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
+=======
+    #endregion
+>>>>>>> 09d72f0 (falhando)
 }

@@ -457,6 +457,7 @@ namespace Antigravity.Core.Commands
                     case GameCommandType.SetStorageFilter:
                         ExecuteStorageFilterCommand(command as StorageFilterCommand);
                         break;
+<<<<<<< HEAD
                     case GameCommandType.SetStorageCapacity:
                         ExecuteStorageCapacityCommand(command as StorageCapacityCommand);
                         break;
@@ -471,6 +472,13 @@ namespace Antigravity.Core.Commands
                         ExecuteStorageCapacityCommand(command as StorageCapacityCommand);
                         break;
 >>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
+=======
+                    case GameCommandType.SetStorageCapacity:
+                        ExecuteStorageCapacityCommand(command as StorageCapacityCommand);
+                        break;
+                        
+                    // Duplicant sync commands
+>>>>>>> 09d72f0 (falhando)
                     case GameCommandType.ChoreStart:
                         ExecuteChoreStartCommand(command as ChoreStartCommand);
                         break;
@@ -546,6 +554,7 @@ namespace Antigravity.Core.Commands
                 _isExecutingRemoteCommand = false;
             }
         }
+<<<<<<< HEAD
 <<<<<<< HEAD
         
         #endregion
@@ -1511,5 +1520,9 @@ namespace Antigravity.Core.Commands
             return 0;
         }
 >>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
+=======
+        
+        #endregion
+>>>>>>> 09d72f0 (falhando)
     }
 }

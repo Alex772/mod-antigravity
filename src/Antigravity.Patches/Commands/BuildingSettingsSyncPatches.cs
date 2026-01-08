@@ -179,6 +179,9 @@ namespace Antigravity.Patches.Commands
             }
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 09d72f0 (falhando)
 
         /// <summary>
         /// Patch for Door.QueueStateChange - syncs door state changes
@@ -312,8 +315,11 @@ namespace Antigravity.Patches.Commands
                 }
             }
         }
+<<<<<<< HEAD
 =======
 >>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
+=======
+>>>>>>> 09d72f0 (falhando)
     }
 }
 
