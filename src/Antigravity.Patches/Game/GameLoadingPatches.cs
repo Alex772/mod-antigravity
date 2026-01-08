@@ -1,6 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 using Antigravity.Core.Network;
+using Antigravity.Client;
 using System.IO;
 
 namespace Antigravity.Patches.Game
@@ -100,11 +101,17 @@ namespace Antigravity.Patches.Game
             // Update multiplayer state
             if (MultiplayerState.IsMultiplayerSession)
             {
+                Debug.Log("[Antigravity] Multiplayer session active, ensuring UI overlays exist...");
+                MultiplayerUpdater.EnsureExists();
                 MultiplayerState.OnGameLoaded(colonyName);
             }
 
             // If host and in multiplayer session, we need to sync this save to clients
-            if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsHost && SteamNetworkManager.IsConnected)
+            // Check both Steam and Local (LiteNetLib) backends
+            bool isNetworkConnected = SteamNetworkManager.IsConnected || 
+                                      (NetworkBackendManager.Active != null && NetworkBackendManager.IsConnected);
+            
+            if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsHost && isNetworkConnected)
             {
                 Debug.Log("[Antigravity] Host loaded save in multiplayer mode, preparing to sync with clients...");
                 OnHostSaveLoaded(filename, colonyName);
@@ -121,9 +128,20 @@ namespace Antigravity.Patches.Game
                     byte[] saveData = File.ReadAllBytes(filename);
                     Debug.Log($"[Antigravity] Read save data: {saveData.Length} bytes");
 
-                    // Count connected players (excluding self)
-                    int connectedCount = SteamNetworkManager.ConnectedPlayers.Count;
-                    Debug.Log($"[Antigravity] Connected players count: {connectedCount}");
+                    // Count connected players - check both backends
+                    int connectedCount = 0;
+                    
+                    if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
+                    {
+                        connectedCount = NetworkBackendManager.Active.ConnectedPlayers.Count;
+                        Debug.Log($"[Antigravity] Local mode - connected peers: {connectedCount}");
+                    }
+                    else
+                    {
+                        connectedCount = SteamNetworkManager.ConnectedPlayers.Count;
+                        Debug.Log($"[Antigravity] Steam mode - connected players: {connectedCount}");
+                    }
+                    
                     MultiplayerState.TotalPlayers = connectedCount + 1; // +1 for host
 
                     // Sync if there are any other players connected

@@ -43,41 +43,20 @@ namespace Antigravity.Patches.Sync
         }
 
         /// <summary>
-        /// Disables AI decision-making components on client Duplicants.
-        /// The Duplicant will be controlled remotely by the Host.
+        /// Previously disabled AI components on client Duplicants.
+        /// NOW: We let client AI run normally, relying on position sync for consistency.
+        /// This approach is more stable since forcing chores proved unreliable.
         /// </summary>
         private static void DisableClientAI(GameObject go)
         {
-            // Disable chore decision components
-            if (go.TryGetComponent<ChoreDriver>(out var driver))
-            {
-                driver.enabled = false;
-            }
+            // Phase 1 Strategy: Let client AI run normally
+            // Position sync every 2 seconds keeps duplicants in the same location
+            // Client may do slightly different animations but will be in the same place
             
-            if (go.TryGetComponent<ChoreConsumer>(out var consumer))
-            {
-                consumer.enabled = false;
-            }
+            // For future improvement: sync the actual ChoreDriver.currentChore state
+            // but for now, this is more stable than trying to force chores
             
-            // Disable AI brain
-            if (go.TryGetComponent<MinionBrain>(out var brain))
-            {
-                brain.enabled = false;
-            }
-            
-            // Disable sensors that trigger behaviors
-            if (go.TryGetComponent<Sensors>(out var sensors))
-            {
-                sensors.enabled = false;
-            }
-            
-            // Note: We do NOT disable Navigator - it's needed for movement animations
-            // The Navigator will receive commands from the Host via sync
-            
-            // Note: We do NOT disable StateMachineController - it's needed for animations
-            // But we do prevent it from making autonomous decisions by disabling MinionBrain
-            
-            Debug.Log($"[Antigravity] Client AI disabled for Duplicant: {go.name}");
+            Debug.Log($"[Antigravity] Client AI active for Duplicant: {go.name} (Phase 1 - position sync only)");
         }
         
         /// <summary>
@@ -96,6 +75,33 @@ namespace Antigravity.Patches.Sync
                 sensors.enabled = true;
                 
             Debug.Log($"[Antigravity] AI re-enabled for Duplicant: {go.name}");
+        }
+        
+        /// <summary>
+        /// Prevents Brain.UpdateChores from running on clients where AI is disabled.
+        /// This prevents NullReferenceException when ChoreConsumer is disabled.
+        /// </summary>
+        [HarmonyPatch(typeof(Brain), "UpdateChores")]
+        public static class Brain_UpdateChores_Patch
+        {
+            public static bool Prefix(Brain __instance)
+            {
+                // If not in multiplayer or we're host, allow normal behavior
+                if (!MultiplayerState.IsMultiplayerSession || MultiplayerState.IsHost)
+                    return true;
+                
+                // On client, only allow if this brain's ChoreConsumer is enabled
+                if (__instance.TryGetComponent<ChoreConsumer>(out var consumer))
+                {
+                    if (!consumer.enabled)
+                    {
+                        // Skip UpdateChores - puppet doesn't choose chores
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
         }
     }
 }

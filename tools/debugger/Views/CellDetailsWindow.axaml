@@ -1,0 +1,101 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Antigravity.Debugger.Views.CellDetailsWindow"
+        Title="Cell Details"
+        Width="400" Height="500"
+        WindowStartupLocation="CenterOwner"
+        Background="#1e1e2e">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock x:Name="CellCoordinates" 
+                       FontSize="20" FontWeight="Bold" 
+                       Foreground="#cdd6f4"/>
+            <TextBlock x:Name="CellId" 
+                       FontSize="14" Foreground="#6c7086" 
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+        
+        <!-- Summary -->
+        <Border Grid.Row="1" Background="#313244" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="Items" Foreground="#6c7086" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="ItemCount" FontSize="18" FontWeight="Bold" Foreground="#89b4fa" HorizontalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="Gas" Foreground="#6c7086" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="GasInfo" FontSize="18" FontWeight="Bold" Foreground="#00FFFF" HorizontalAlignment="Center"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="Liquid" Foreground="#6c7086" FontSize="12" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="LiquidInfo" FontSize="18" FontWeight="Bold" Foreground="#0088FF" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Details List -->
+        <ScrollViewer Grid.Row="2">
+            <StackPanel Spacing="8">
+                <!-- Gas Section -->
+                <Border x:Name="GasSection" Background="#313244" CornerRadius="6" Padding="12" IsVisible="False">
+                    <StackPanel>
+                        <TextBlock Text="🌫️ Gas" FontWeight="Bold" Foreground="#00FFFF" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="GasDetails" Foreground="#cdd6f4" FontSize="13" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Liquid Section -->
+                <Border x:Name="LiquidSection" Background="#313244" CornerRadius="6" Padding="12" IsVisible="False">
+                    <StackPanel>
+                        <TextBlock Text="💧 Liquid" FontWeight="Bold" Foreground="#0088FF" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="LiquidDetails" Foreground="#cdd6f4" FontSize="13" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Items Section -->
+                <Border x:Name="ItemsSection" Background="#313244" CornerRadius="6" Padding="12" IsVisible="False">
+                    <StackPanel>
+                        <TextBlock Text="📦 Items" FontWeight="Bold" Foreground="#89b4fa" Margin="0,0,0,8"/>
+                        <ItemsControl x:Name="ItemsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="#cdd6f4" FontSize="12" Margin="0,2"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Empty State -->
+                <TextBlock x:Name="EmptyMessage" 
+                           Text="No data for this cell" 
+                           Foreground="#6c7086" 
+                           FontSize="14" 
+                           HorizontalAlignment="Center"
+                           IsVisible="False"/>
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Close Button -->
+        <Button Grid.Row="3" Content="Close" 
+                HorizontalAlignment="Right" 
+                Padding="24,8" Margin="0,16,0,0"
+                Click="OnCloseClick"/>
+    </Grid>
+</Window>

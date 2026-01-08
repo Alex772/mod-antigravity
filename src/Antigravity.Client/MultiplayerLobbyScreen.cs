@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Antigravity.Core.Network;
+using Antigravity.Client.UI;
 using Steamworks;
 
 namespace Antigravity.Client
@@ -120,7 +121,7 @@ namespace Antigravity.Client
             _panel = CreatePanel("MainPanel", overlay.transform);
             var panelImage = _panel.AddComponent<Image>();
             panelImage.color = new Color(0.15f, 0.15f, 0.2f, 1f);
-            SetCenteredRect(_panel, 650, 550);
+            SetCenteredRect(_panel, 650, 600);
 
             var outline = _panel.AddComponent<Outline>();
             outline.effectColor = new Color(0.4f, 0.6f, 1f, 1f);
@@ -185,8 +186,8 @@ namespace Antigravity.Client
             var playersPanel = CreatePanel("PlayersPanel", _lobbySection.transform);
             var playersPanelImg = playersPanel.AddComponent<Image>();
             playersPanelImg.color = new Color(0.1f, 0.1f, 0.15f, 0.8f);
-            SetAnchoredPosition(playersPanel, 0, -40);
-            SetSize(playersPanel, 400, 100);
+            SetAnchoredPosition(playersPanel, 0, -20);
+            SetSize(playersPanel, 400, 110);
 
             // Players count header
             var playersLabel = CreateText("PlayersLabel", playersPanel.transform, "👥 Players (0/4)", 18);
@@ -209,7 +210,7 @@ namespace Antigravity.Client
 
             // START GAME button (Host only - will be hidden for clients)
             _startGameButton = CreateButton("StartGameButton", _lobbySection.transform, "🚀  START GAME", OnStartGameClick);
-            SetAnchoredPosition(_startGameButton, 0, -130);
+            SetAnchoredPosition(_startGameButton, 0, -150);
             SetSize(_startGameButton, 280, 50);
             var startBtnImg = _startGameButton.GetComponent<Image>();
             startBtnImg.color = new Color(0.2f, 0.7f, 0.3f, 1f);
@@ -217,7 +218,7 @@ namespace Antigravity.Client
 
             // Leave button
             var leaveBtn = CreateButton("LeaveButton", _lobbySection.transform, "❌  LEAVE LOBBY", OnLeaveClick);
-            SetAnchoredPosition(leaveBtn, 0, -190);
+            SetAnchoredPosition(leaveBtn, 0, -210);
             SetSize(leaveBtn, 200, 40);
             var leaveBtnImg = leaveBtn.GetComponent<Image>();
             leaveBtnImg.color = new Color(0.6f, 0.25f, 0.25f, 1f);
@@ -226,7 +227,7 @@ namespace Antigravity.Client
 
             // Status text
             var statusObj = CreateText("Status", _panel.transform, "", 14);
-            SetAnchoredPosition(statusObj, 0, -200);
+            SetAnchoredPosition(statusObj, 0, -250);
             _statusText = statusObj.GetComponent<Text>();
             _statusText.color = Color.yellow;
 
@@ -241,7 +242,7 @@ namespace Antigravity.Client
 
             // Steam info
             var steamInfo = CreateText("SteamInfo", _panel.transform, "✓ Connected via Steam (no IP needed)", 12);
-            SetAnchoredPosition(steamInfo, 0, -240);
+            SetAnchoredPosition(steamInfo, 0, -280);
             steamInfo.GetComponent<Text>().color = new Color(0.4f, 0.8f, 0.4f, 1f);
 
             // === GAME SELECTION Section (shown when host clicks START) ===
@@ -275,7 +276,7 @@ namespace Antigravity.Client
 
             // Waiting text (for clients)
             var waitingObj = CreateText("WaitingText", _panel.transform, "", 16);
-            SetAnchoredPosition(waitingObj, 0, 0);
+            SetAnchoredPosition(waitingObj, 0, -100);
             _waitingText = waitingObj.GetComponent<Text>();
             _waitingText.color = new Color(0.8f, 0.8f, 0.3f, 1f);
             waitingObj.SetActive(false);
@@ -289,6 +290,15 @@ namespace Antigravity.Client
             SteamNetworkManager.OnDisconnected += OnDisconnectedFromLobby;
             SteamNetworkManager.OnPlayerJoined += OnPlayerJoinedLobby;
             SteamNetworkManager.OnPlayerLeft += OnPlayerLeftLobby;
+            SteamNetworkManager.OnJoinInviteReceived += OnJoinInviteReceived;
+        }
+
+        private void OnJoinInviteReceived(CSteamID lobbyId)
+        {
+            // Ensure lobby screen is shown when joining via Steam invite
+            Debug.Log($"[Antigravity] Join invite received for lobby: {lobbyId}");
+            Show();
+            SetStatus("Joining friend's game...", Color.yellow);
         }
 
         private void OnHostClick()
@@ -516,6 +526,11 @@ namespace Antigravity.Client
             _inLobby = true;
             RefreshUI();
             SetStatus(SteamNetworkManager.IsHost ? "Lobby created! Waiting for players..." : "Connected to lobby!", Color.green);
+            
+            // Show welcome message in chat
+            ChatManager.SendSystemMessage(SteamNetworkManager.IsHost 
+                ? "🎮 Lobby created! Waiting for players..." 
+                : "🔗 Connected to lobby!");
         }
 
         private void OnDisconnectedFromLobby()
@@ -671,146 +686,29 @@ namespace Antigravity.Client
         #region UI Helpers
 
         private GameObject CreatePanel(string name, Transform parent)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-            obj.AddComponent<RectTransform>();
-            return obj;
-        }
+            => UIFactory.CreatePanel(name, parent);
 
         private GameObject CreateText(string name, Transform parent, string text, int fontSize)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-            
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(500, 40);
-
-            var textComp = obj.AddComponent<Text>();
-            textComp.text = text;
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = fontSize;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.color = Color.white;
-
-            return obj;
-        }
+            => UIFactory.CreateText(name, parent, text, fontSize);
 
         private GameObject CreateButton(string name, Transform parent, string text, UnityEngine.Events.UnityAction onClick)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(200, 50);
-
-            var image = obj.AddComponent<Image>();
-            image.color = new Color(0.25f, 0.45f, 0.75f, 1f);
-
-            var button = obj.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(onClick);
-
-            var colors = button.colors;
-            colors.normalColor = new Color(0.25f, 0.45f, 0.75f, 1f);
-            colors.highlightedColor = new Color(0.35f, 0.55f, 0.85f, 1f);
-            colors.pressedColor = new Color(0.2f, 0.35f, 0.65f, 1f);
-            button.colors = colors;
-
-            var textObj = new GameObject("Text");
-            textObj.transform.SetParent(obj.transform, false);
-            
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            var textComp = textObj.AddComponent<Text>();
-            textComp.text = text;
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = 18;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.color = Color.white;
-
-            return obj;
-        }
+            => UIFactory.CreateButton(name, parent, text, onClick);
 
         private InputField CreateInputField(string name, Transform parent, string placeholder)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(300, 40);
-
-            var image = obj.AddComponent<Image>();
-            image.color = new Color(0.2f, 0.2f, 0.25f, 1f);
-
-            var placeholderObj = new GameObject("Placeholder");
-            placeholderObj.transform.SetParent(obj.transform, false);
-            var phRect = placeholderObj.AddComponent<RectTransform>();
-            phRect.anchorMin = Vector2.zero;
-            phRect.anchorMax = Vector2.one;
-            phRect.offsetMin = new Vector2(10, 0);
-            phRect.offsetMax = new Vector2(-10, 0);
-            var phText = placeholderObj.AddComponent<Text>();
-            phText.text = placeholder;
-            phText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            phText.fontSize = 14;
-            phText.color = new Color(0.5f, 0.5f, 0.5f, 1f);
-            phText.alignment = TextAnchor.MiddleCenter;
-
-            var textObj = new GameObject("Text");
-            textObj.transform.SetParent(obj.transform, false);
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(10, 0);
-            textRect.offsetMax = new Vector2(-10, 0);
-            var textComp = textObj.AddComponent<Text>();
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = 16;
-            textComp.color = Color.white;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.supportRichText = false;
-
-            var inputField = obj.AddComponent<InputField>();
-            inputField.textComponent = textComp;
-            inputField.placeholder = phText;
-
-            return inputField;
-        }
+            => UIFactory.CreateInputField(name, parent, placeholder);
 
         private void SetFullScreen(GameObject obj)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.sizeDelta = Vector2.zero;
-        }
+            => obj.SetFullScreen();
 
         private void SetCenteredRect(GameObject obj, float width, float height)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(width, height);
-            rect.anchoredPosition = Vector2.zero;
-        }
+            => obj.SetCenteredRect(width, height);
 
         private void SetAnchoredPosition(GameObject obj, float x, float y)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(x, y);
-        }
+            => obj.SetAnchoredPosition(x, y);
 
         private void SetSize(GameObject obj, float width, float height)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(width, height);
-        }
+            => obj.SetSize(width, height);
+
 
         #endregion
     }

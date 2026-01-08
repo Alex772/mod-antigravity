@@ -43,6 +43,10 @@ namespace Antigravity.Core.Network
             SteamNetworkManager.OnDataReceived += OnNetworkDataReceived;
             SteamNetworkManager.OnPlayerLeft += OnPlayerDisconnected;
             
+            // Subscribe to heartbeat disconnect events
+            HeartbeatManager.OnHostDisconnected += OnHostConnectionLost;
+            HeartbeatManager.OnClientDisconnected += HandlePlayerDisconnected;
+            
             Debug.Log("[Antigravity] GameSession initialized.");
         }
 
@@ -53,6 +57,9 @@ namespace Antigravity.Core.Network
         {
             SteamNetworkManager.OnDataReceived -= OnNetworkDataReceived;
             SteamNetworkManager.OnPlayerLeft -= OnPlayerDisconnected;
+            HeartbeatManager.OnHostDisconnected -= OnHostConnectionLost;
+            HeartbeatManager.OnClientDisconnected -= HandlePlayerDisconnected;
+            HeartbeatManager.Stop();
             
             Reset();
         }
@@ -77,7 +84,11 @@ namespace Antigravity.Core.Network
         /// </summary>
         public static void HostStartGame(byte[] worldData, string colonyName, bool isLoadingSave)
         {
-            if (!SteamNetworkManager.IsHost)
+            // Check if we're the host on either backend
+            bool isHost = SteamNetworkManager.IsHost || 
+                          (NetworkBackendManager.Active != null && NetworkBackendManager.IsHost);
+            
+            if (!isHost)
             {
                 Debug.LogError("[Antigravity] Only host can start the game!");
                 return;
@@ -91,9 +102,24 @@ namespace Antigravity.Core.Network
 
             // Initialize ready status for all players
             _playerReadyStatus.Clear();
-            foreach (var player in SteamNetworkManager.ConnectedPlayers)
+            
+            // Handle both backends
+            if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
             {
-                _playerReadyStatus[player.m_SteamID] = false;
+                // Local mode - use NetworkBackendManager
+                foreach (var playerId in NetworkBackendManager.Active.ConnectedPlayers)
+                {
+                    _playerReadyStatus[playerId.Value] = false;
+                }
+                Debug.Log($"[Antigravity] Local mode: initialized ready status for {NetworkBackendManager.Active.ConnectedPlayers.Count} players");
+            }
+            else
+            {
+                // Steam mode
+                foreach (var player in SteamNetworkManager.ConnectedPlayers)
+                {
+                    _playerReadyStatus[player.m_SteamID] = false;
+                }
             }
 
             // Compress the world data
@@ -216,10 +242,70 @@ namespace Antigravity.Core.Network
                     HandleCursorUpdate(message);
                     break;
 
+                // Sync verification messages
+                case MessageType.SyncCheck:
+                    HandleSyncCheck(message);
+                    break;
+
+                case MessageType.SyncResponse:
+                    HandleSyncResponse(message);
+                    break;
+
+                case MessageType.SyncCategoryData:
+                case MessageType.SyncCategoryChunk:
+                    HandleSyncCategoryData(message);
+                    break;
+
+                // Heartbeat messages
+                case MessageType.Heartbeat:
+                    var hbMsg = MessageSerializer.DeserializePayload<HeartbeatMessage>(message.Payload);
+                    if (hbMsg != null) HeartbeatManager.HandleHeartbeat(hbMsg);
+                    break;
+
+                case MessageType.HeartbeatAck:
+                    var hbAck = MessageSerializer.DeserializePayload<HeartbeatAckMessage>(message.Payload);
+                    if (hbAck != null) HeartbeatManager.HandleHeartbeatAck(sender.m_SteamID, hbAck);
+                    break;
+
+                // Chat messages
+                case MessageType.Chat:
+                    var chatMsg = MessageSerializer.DeserializePayload<ChatMessage>(message.Payload);
+                    if (chatMsg != null) ChatManager.HandleChatMessage(chatMsg, sender.m_SteamID);
+                    break;
+
+                // Disconnect notification
+                case MessageType.Disconnect:
+                    HandlePlayerDisconnected(sender.m_SteamID);
+                    break;
+
                 default:
                     // Other message types handled elsewhere
                     break;
             }
+        }
+
+        private static void HandleSyncCheck(NetworkMessage message)
+        {
+            var data = MessageSerializer.DeserializePayload<Sync.SyncCheckMessage>(message.Payload);
+            if (data == null) return;
+
+            Sync.PartialSyncManager.HandleSyncCheck(data);
+        }
+
+        private static void HandleSyncResponse(NetworkMessage message)
+        {
+            var data = MessageSerializer.DeserializePayload<Sync.SyncResponseMessage>(message.Payload);
+            if (data == null) return;
+
+            Sync.PartialSyncManager.HandleSyncResponse(message.SenderSteamId, data);
+        }
+
+        private static void HandleSyncCategoryData(NetworkMessage message)
+        {
+            var data = MessageSerializer.DeserializePayload<Sync.SyncCategoryDataMessage>(message.Payload);
+            if (data == null) return;
+
+            Sync.PartialSyncManager.HandleCategoryData(data);
         }
 
         private static void HandleGameStarting(NetworkMessage message)
@@ -347,11 +433,52 @@ namespace Antigravity.Core.Network
 
         private static void OnPlayerDisconnected(CSteamID player)
         {
-            _playerReadyStatus.Remove(player.m_SteamID);
-
+            HandlePlayerDisconnected(player.m_SteamID);
+        }
+        
+        /// <summary>
+        /// Handle player disconnect by Steam ID.
+        /// </summary>
+        public static void HandlePlayerDisconnected(ulong playerId)
+        {
+            _playerReadyStatus.Remove(playerId);
+            HeartbeatManager.UnregisterClient(playerId);
+            
+            // Get player name for notification
+            string playerName = Steamworks.SteamFriends.GetFriendPersonaName(new CSteamID(playerId));
+            ChatManager.NotifyPlayerLeft(playerName);
+            
             if (IsWaitingForPlayers && SteamNetworkManager.IsHost)
             {
                 CheckAllPlayersReady();
+            }
+            
+            Debug.Log($"[Antigravity] Player disconnected: {playerName} ({playerId})");
+        }
+        
+        /// <summary>
+        /// Called when host disconnect is detected.
+        /// Returns client to main menu.
+        /// </summary>
+        public static void OnHostConnectionLost()
+        {
+            ChatManager.NotifyHostDisconnected();
+            
+            Debug.LogError("[Antigravity] Host connection lost! Returning to menu...");
+            
+            // Clean up multiplayer state
+            MultiplayerState.Reset();
+            HeartbeatManager.Stop();
+            
+            // Return to main menu
+            try
+            {
+                // Use Klei's scene management
+                App.LoadScene("frontend");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Antigravity] Failed to return to menu: {ex.Message}");
             }
         }
 
@@ -359,7 +486,7 @@ namespace Antigravity.Core.Network
 
         #region Helper Methods
 
-        private static void SendToAllClients<T>(MessageType type, T payload)
+        public static void SendToAllClients<T>(MessageType type, T payload)
         {
             // Get sender ID based on current backend
             ulong senderId = NetworkBackendManager.IsLocalMode 
@@ -381,6 +508,19 @@ namespace Antigravity.Core.Network
             }
         }
 
+        /// <summary>
+        /// Send message to host (templated version)
+        /// </summary>
+        public static void SendToHost<T>(MessageType type, T payload)
+        {
+            ulong senderId = NetworkBackendManager.IsLocalMode 
+                ? (ulong)NetworkBackendManager.LocalPlayerId.Value 
+                : SteamNetworkManager.LocalSteamId.m_SteamID;
+                
+            var message = MessageSerializer.CreateMessage(type, payload, senderId);
+            SendToHost(message);
+        }
+
         private static void SendToHost(NetworkMessage message)
         {
             byte[] data = MessageSerializer.Serialize(message);
@@ -389,11 +529,33 @@ namespace Antigravity.Core.Network
             if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
             {
                 NetworkBackendManager.SendTo(NetworkBackendManager.HostPlayerId, data);
-                Debug.Log($"[Antigravity] SendToHost via LiteNetLib: {message.Type}, {data.Length} bytes");
             }
             else
             {
                 SteamNetworkManager.SendTo(SteamNetworkManager.HostSteamId, data);
+            }
+        }
+
+        /// <summary>
+        /// Send message to a specific client
+        /// </summary>
+        public static void SendToClient<T>(ulong clientId, MessageType type, T payload)
+        {
+            ulong senderId = NetworkBackendManager.IsLocalMode 
+                ? (ulong)NetworkBackendManager.LocalPlayerId.Value 
+                : SteamNetworkManager.LocalSteamId.m_SteamID;
+                
+            var message = MessageSerializer.CreateMessage(type, payload, senderId);
+            byte[] data = MessageSerializer.Serialize(message);
+            
+            // Route to appropriate backend
+            if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.Active != null)
+            {
+                NetworkBackendManager.SendTo(PlayerId.FromLiteNetLib((int)clientId), data);
+            }
+            else
+            {
+                SteamNetworkManager.SendTo(new Steamworks.CSteamID(clientId), data);
             }
         }
 
@@ -452,7 +614,7 @@ namespace Antigravity.Core.Network
             }
         }
 
-        private static long GetCurrentGameTick()
+        public static long GetCurrentGameTick()
         {
             // Try to get the current game tick from ONI
             try

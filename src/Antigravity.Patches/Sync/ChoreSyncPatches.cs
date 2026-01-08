@@ -36,21 +36,50 @@ namespace Antigravity.Patches.Sync
                 // Some chores might not have a target (e.g. Idle)
                 int targetCell = -1;
                 int targetId = -1;
+                string targetPrefabId = null;
 
                 if (chore.target != null && chore.target.gameObject != null)
                 {
                     targetCell = Grid.PosToCell(chore.target.gameObject);
                     targetId = chore.target.gameObject.GetInstanceID();
+                    
+                    // Get prefab ID for matching on client
+                    var kpid = chore.target.gameObject.GetComponent<KPrefabID>();
+                    if (kpid != null)
+                    {
+                        targetPrefabId = kpid.PrefabTag.ToString();
+                    }
                 }
 
-                // Create command
+                // Get target position
+                Vector3 targetPos = chore.target?.gameObject?.transform.position ?? Vector3.zero;
+                
+                // Get chore group
+                string choreGroupId = chore.choreType?.groups != null && chore.choreType.groups.Length > 0
+                    ? chore.choreType.groups[0]?.Id
+                    : null;
+
+                // Create command with all details
                 var cmd = new ChoreStartCommand
                 {
                     DuplicantName = minion.name,
                     ChoreTypeId = chore.choreType.Id,
                     TargetCell = targetCell,
-                    TargetId = targetId
+                    TargetId = targetId,
+                    TargetPrefabId = targetPrefabId,
+                    TargetPositionX = targetPos.x,
+                    TargetPositionY = targetPos.y,
+                    ChoreGroupId = choreGroupId
                 };
+
+                // Detailed logging of what we're sending
+                Debug.Log($"[Antigravity] HOST sending ChoreStart:" +
+                    $"\n  Duplicant: {cmd.DuplicantName}" +
+                    $"\n  ChoreType: {cmd.ChoreTypeId}" +
+                    $"\n  ChoreGroup: {cmd.ChoreGroupId ?? "null"}" +
+                    $"\n  TargetCell: {cmd.TargetCell}" +
+                    $"\n  TargetPrefabId: {cmd.TargetPrefabId ?? "null"}" +
+                    $"\n  TargetPos: ({cmd.TargetPositionX:F1}, {cmd.TargetPositionY:F1})");
 
                 // Send
                 CommandManager.SendCommand(cmd);

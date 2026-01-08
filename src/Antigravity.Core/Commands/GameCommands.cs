@@ -80,6 +80,21 @@ namespace Antigravity.Core.Commands
         RandomSeedSync = 116,       // Random seed synchronization
         DuplicantCommandRequest = 117, // Client requests action from Host
         
+        // World sync commands
+        ItemSync = 118,              // Sync pickupable items in world
+        ElementChange = 119,         // Gas/liquid element changes
+        
+        // Building config sync
+        SetFilterable = 120,         // Element filter (valves, etc.)
+        SetThreshold = 121,          // Sensor threshold
+        SetLogicSwitch = 122,        // Logic switch on/off
+        
+        // Hard sync
+        HardSync = 130,              // Full game state sync via save data
+        ResearchSync = 131,          // Research tree sync
+        SkillsSync = 132,            // Skills/jobs sync
+        ScheduleSync = 133,          // Schedule sync
+        
         // Generic
         Custom = 100
     }
@@ -324,6 +339,43 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
+    /// Filterable command - for element filter changes (valves, pumps, etc.)
+    /// </summary>
+    [Serializable]
+    public class FilterableCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public string SelectedTag { get; set; }  // Element tag (e.g., "Oxygen", "Water")
+
+        public FilterableCommand() : base(GameCommandType.SetFilterable) { }
+    }
+
+    /// <summary>
+    /// Threshold command - for sensor threshold changes
+    /// </summary>
+    [Serializable]
+    public class ThresholdCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public float Threshold { get; set; }
+        public bool ActivateAbove { get; set; }  // true = activate above threshold
+
+        public ThresholdCommand() : base(GameCommandType.SetThreshold) { }
+    }
+
+    /// <summary>
+    /// LogicSwitch command - for manual logic switch on/off
+    /// </summary>
+    [Serializable]
+    public class LogicSwitchCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public bool SwitchOn { get; set; }
+
+        public LogicSwitchCommand() : base(GameCommandType.SetLogicSwitch) { }
+    }
+
+    /// <summary>
     /// Disconnect utility command - for cutting wire/pipe connections
     /// </summary>
     [Serializable]
@@ -348,6 +400,16 @@ namespace Antigravity.Core.Commands
         
         // InstanceID of target GameObject (e.g. what is being dug or built)
         public int TargetId { get; set; } 
+        
+        // Prefab ID of the target (for matching on client where InstanceID differs)
+        public string TargetPrefabId { get; set; }
+        
+        // Exact position of the target for precise matching
+        public float TargetPositionX { get; set; }
+        public float TargetPositionY { get; set; }
+        
+        // Chore group (Build, Dig, etc) for better categorization
+        public string ChoreGroupId { get; set; }
         
         // Serialized context data if needed
         public string ContextData { get; set; }
@@ -412,19 +474,28 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
-    /// Lightweight position sync for a single Duplicant.
-    /// Sent more frequently than full state for smoother sync.
+    /// Unified position and state sync for a single Duplicant.
+    /// Contains position, movement, and current chore information.
     /// </summary>
     [Serializable]
     public class PositionSyncCommand : GameCommand
     {
+        // Position data
         public string DuplicantName { get; set; }
         public float PositionX { get; set; }
         public float PositionY { get; set; }
         public float PositionZ { get; set; }
         public int CurrentCell { get; set; }
+        
+        // Movement data
         public bool IsMoving { get; set; }
         public int TargetCell { get; set; }
+        
+        // Current chore data (unified source of truth)
+        public string CurrentChoreTypeId { get; set; }
+        public string CurrentChoreGroupId { get; set; }
+        public int ChoreTargetCell { get; set; }
+        public string ChoreTargetPrefabId { get; set; }
 
         public PositionSyncCommand() : base(GameCommandType.PositionSync) { }
     }
@@ -466,5 +537,31 @@ namespace Antigravity.Core.Commands
         public int TargetObjectId { get; set; }  // For AssignChore (target object)
 
         public DuplicantCommandRequestCommand() : base(GameCommandType.DuplicantCommandRequest) { }
+    }
+
+    /// <summary>
+    /// Command for syncing pickupable items in the world.
+    /// Sent periodically by host to keep item state synchronized.
+    /// </summary>
+    [Serializable]
+    public class ItemSyncCommand : GameCommand
+    {
+        public int WorldWidth { get; set; }
+        public int WorldHeight { get; set; }
+        public List<ItemSyncData> Items { get; set; } = new List<ItemSyncData>();
+
+        public ItemSyncCommand() : base(GameCommandType.ItemSync) { }
+    }
+
+    /// <summary>
+    /// Data for a single pickupable item.
+    /// </summary>
+    [Serializable]
+    public class ItemSyncData
+    {
+        public int Cell { get; set; }
+        public string PrefabId { get; set; }
+        public float Mass { get; set; }
+        public int ElementId { get; set; }
     }
 }

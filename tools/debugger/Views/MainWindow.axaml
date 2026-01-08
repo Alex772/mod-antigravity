@@ -491,6 +491,335 @@
                 </Border>
             </TabItem>
             
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- TAB 4: WORLD DATA (View game save data) -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <TabItem Header="🌍 World Data">
+                <Grid RowDefinitions="Auto,Auto,*" Margin="0,12,0,0">
+                    <!-- Header with actions -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="WORLD SAVE VIEWER" FontWeight="SemiBold" Foreground="#a6adc8" VerticalAlignment="Center"/>
+                        <Button Content="� Decompress" Command="{Binding DecompressWorldDataCommand}" 
+                                IsEnabled="{Binding HasWorldData}" Classes="primary"/>
+                        <Button Content="💾 Save to File" Command="{Binding SaveWorldDataCommand}" 
+                                IsEnabled="{Binding HasWorldData}"/>
+                        <Button Content="🗑️ Clear" Command="{Binding ClearWorldDataCommand}" 
+                                IsEnabled="{Binding HasWorldData}"/>
+                    </StackPanel>
+                    
+                    <!-- Save Info Panel -->
+                    <Border Grid.Row="1" Classes="card" Margin="0,12,0,0">
+                        <Grid ColumnDefinitions="*,*,*,Auto" Margin="16">
+                            <!-- Column 1: Colony Info -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="💾 COLONY" FontWeight="SemiBold" Foreground="#a6e3a1"/>
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorldDataColonyName}" FontWeight="Bold" FontSize="14" Foreground="#f5c2e7"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Cycles:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SaveCycles}" FontWeight="SemiBold" Foreground="#fab387"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Dupes:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SaveDuplicants}" FontWeight="SemiBold"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Sandbox:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SaveSandbox}"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <!-- Column 2: World Info -->
+                            <StackPanel Grid.Column="1" Spacing="8" Margin="24,0">
+                                <TextBlock Text="🌍 WORLD" FontWeight="SemiBold" Foreground="#89b4fa"/>
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Build:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SaveBuildVersion}"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SaveVersion}"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Size:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SaveWorldSize}" FontWeight="SemiBold"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Cluster:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SaveClusterId}" FontSize="10" TextWrapping="Wrap"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <!-- Column 3: Size Info -->
+                            <StackPanel Grid.Column="2" Spacing="8" Margin="24,0">
+                                <TextBlock Text="📊 SIZE" FontWeight="SemiBold" Foreground="#f9e2af"/>
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Compressed:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorldDataCompressedSize}" FontWeight="SemiBold"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Original:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorldDataDecompressedSize}" FontWeight="SemiBold" Foreground="#a6e3a1"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Ratio:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding WorldDataCompressionRatio}"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Chunks:" Foreground="#a6adc8" Margin="0,0,12,4"/>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding WorldDataChunksReceived}" Foreground="#a6e3a1"/>
+                                        <TextBlock Text="/" Foreground="#6c7086"/>
+                                        <TextBlock Text="{Binding WorldDataChunksTotal}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <!-- Column 4: Progress -->
+                            <StackPanel Grid.Column="3" Spacing="8" Margin="24,0,0,0" Width="100">
+                                <TextBlock Text="⚡ PROGRESS" FontWeight="SemiBold" Foreground="#fab387"/>
+                                <Border Background="#313244" CornerRadius="8" Padding="16,12" Margin="0,8,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding WorldDataProgress}" FontSize="24" FontWeight="Bold" 
+                                                   HorizontalAlignment="Center" Foreground="#a6e3a1"/>
+                                        <TextBlock Text="received" FontSize="12" Foreground="#6c7086" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Save Data Preview -->
+                    <Border Grid.Row="2" Classes="card" Margin="0,12,0,0">
+                        <Grid RowDefinitions="Auto,*">
+                            <StackPanel Margin="16,16,16,8">
+                                <TextBlock Text="� SAVE DATA PREVIEW" FontWeight="SemiBold" Foreground="#89b4fa"/>
+                                <TextBlock Text="Raw bytes preview (first 2KB)" FontSize="12" Foreground="#6c7086" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            
+                            <ScrollViewer Grid.Row="1" Margin="16,0,16,16">
+                                <TextBox Text="{Binding WorldDataPreview}" 
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         FontFamily="Consolas, Courier New, monospace"
+                                         FontSize="11"
+                                         Background="#1e1e2e"
+                                         Foreground="#cdd6f4"
+                                         BorderThickness="0"
+                                         Padding="12"
+                                         TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+            
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <!-- TAB 5: DUPLICANTS -->
+            <!-- ═══════════════════════════════════════════════════════════════ -->
+            <TabItem Header="👤 Duplicants">
+                <Grid ColumnDefinitions="300,*" Margin="0,12,0,0">
+                    
+                    <!-- Left: Duplicant List -->
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <TextBlock Text="TRACKED DUPLICANTS" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                        
+                        <Border Grid.Row="1" Classes="card" Margin="0,0,12,0">
+                            <ListBox ItemsSource="{Binding Duplicants}" 
+                                     SelectedItem="{Binding SelectedDuplicant}"
+                                     Background="Transparent" BorderThickness="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="4">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" Foreground="#cdd6f4"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding CurrentChore}" Foreground="#a6adc8" Margin="12,0" FontSize="12"/>
+                                            <Border Grid.Column="2" Background="{Binding StatusColor}" CornerRadius="3" Padding="6,2">
+                                                <TextBlock Text="{Binding Position}" FontSize="11" Foreground="#1e1e2e"/>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                        
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="🔄 Refresh" Classes="secondary" Command="{Binding ClearDuplicantsCommand}" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Duplicants.Count, StringFormat='Total: {0}'}" VerticalAlignment="Center" Foreground="#6c7086"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- Right: Details -->
+                    <Border Grid.Column="1" Classes="card">
+                        <Grid RowDefinitions="Auto,Auto,*">
+                            <StackPanel Margin="16">
+                                <TextBlock Text="DUPLICANT DETAILS" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,12"/>
+                                
+                                <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
+                                    <TextBlock Text="Name:" Foreground="#6c7086"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding DuplicantDetailsName}" FontWeight="SemiBold" Foreground="#89b4fa"/>
+                                    
+                                    <TextBlock Grid.Row="1" Text="Position:" Foreground="#6c7086" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DuplicantDetailsPosition}" Foreground="#a6e3a1" Margin="0,8,0,0"/>
+                                    
+                                    <TextBlock Grid.Row="2" Text="Chore:" Foreground="#6c7086" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DuplicantDetailsChore}" Foreground="#f9e2af" Margin="0,8,0,0"/>
+                                    
+                                    <TextBlock Grid.Row="3" Text="Status:" Foreground="#6c7086" Margin="0,8,0,0"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DuplicantDetailsStatus}" Foreground="#cba6f7" Margin="0,8,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                            
+                            <Border Grid.Row="1" Background="#313244" Height="1" Margin="16,0"/>
+                            
+                            <StackPanel Grid.Row="2" Margin="16">
+                                <TextBlock Text="CHORE HISTORY" FontWeight="SemiBold" Foreground="#a6adc8" Margin="0,0,0,8"/>
+                                <ListBox ItemsSource="{Binding DuplicantChores}" 
+                                         Background="Transparent" BorderThickness="0" MaxHeight="200">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2">
+                                                <TextBlock Text="{Binding DisplayTime}" FontSize="11" Foreground="#6c7086" Width="60"/>
+                                                <TextBlock Text="{Binding ChoreType}" FontWeight="SemiBold" Foreground="#f9e2af"/>
+                                                <TextBlock Text=" → " Foreground="#6c7086"/>
+                                                <TextBlock Text="{Binding TargetPrefabId}" Foreground="#a6adc8"/>
+                                                <TextBlock Text=" @ " Foreground="#6c7086"/>
+                                                <TextBlock Text="{Binding PositionDisplay}" Foreground="#89b4fa"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <TextBlock Text="No chore history yet" Foreground="#6c7086" FontStyle="Italic"
+                                           IsVisible="{Binding !DuplicantChores.Count}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+            
+            <!-- ═══════════════════════════════════════════════════════════════════ -->
+            <!-- WORLD MAP TAB -->
+            <!-- ═══════════════════════════════════════════════════════════════════ -->
+            <TabItem Header="🗺️ World Map">
+                <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+                    <!-- Header -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="WORLD MAP" FontWeight="Bold" FontSize="18" Foreground="#cba6f7"/>
+                        <TextBlock Text="{Binding WorldMapStatus}" Foreground="#a6adc8" VerticalAlignment="Center" MaxWidth="300" TextTrimming="CharacterEllipsis"/>
+                        <Button Content="🔄 Refresh" Command="{Binding RefreshWorldMapCommand}" Classes="primary"/>
+                        <TextBlock Text="Zoom:" VerticalAlignment="Center" Foreground="#6c7086"/>
+                        <Slider Name="ZoomSlider" 
+                                Width="100" 
+                                Minimum="0.5" Maximum="4" 
+                                Value="{Binding ZoomLevel}" 
+                                VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}" 
+                                   Width="45" VerticalAlignment="Center" Foreground="#89b4fa"/>
+                        <Button Content="1:1" Command="{Binding ResetZoomCommand}" ToolTip.Tip="Reset to 100%"/>
+                        <Button Content="Fit" Command="{Binding FitToViewCommand}" ToolTip.Tip="Fit map to view"/>
+                    </StackPanel>
+                    
+                    <!-- Map and Filter Panel -->
+                    <Grid Grid.Row="1" ColumnDefinitions="200,*" Margin="0,16">
+                        <!-- Filter Panel -->
+                        <Border Background="#1e1e2e" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+                                <!-- Layer Toggles -->
+                                <TextBlock Text="MAP LAYERS" FontWeight="Bold" FontSize="12" Foreground="#fab387"/>
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding MapLayers}" Margin="0,8,0,12">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding IsVisible}" Margin="0,2">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Border Width="12" Height="12" CornerRadius="2" 
+                                                            Background="{Binding ColorHex}"/>
+                                                    <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#cdd6f4"/>
+                                                    <TextBlock Text="{Binding ItemCount, StringFormat=({0})}" 
+                                                               FontSize="10" Foreground="#6c7086"/>
+                                                </StackPanel>
+                                            </CheckBox>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                                <!-- Item Filter Header -->
+                                <TextBlock Grid.Row="2" Text="ITEM FILTER" FontWeight="Bold" FontSize="12" Foreground="#cba6f7"/>
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8">
+                                    <Button Content="All" Command="{Binding SelectAllFiltersCommand}" FontSize="11" Padding="8,4"/>
+                                    <Button Content="None" Command="{Binding ClearAllFiltersCommand}" FontSize="11" Padding="8,4"/>
+                                    <Button Content="Apply" Command="{Binding ApplyFilterCommand}" FontSize="11" Padding="8,4" Classes="primary"/>
+                                </StackPanel>
+                                <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding ItemFilters}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsSelected}" Margin="0,2">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding Name}" FontSize="11" Foreground="#cdd6f4" 
+                                                                   MaxWidth="120" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding Count, StringFormat=({0})}" FontSize="10" Foreground="#6c7086"/>
+                                                    </StackPanel>
+                                                </CheckBox>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Map View -->
+                        <Border Grid.Column="1" Background="#181825" CornerRadius="8" Padding="0" ClipToBounds="True">
+                            <ScrollViewer Name="MapScrollViewer" 
+                                          HorizontalScrollBarVisibility="Auto" 
+                                          VerticalScrollBarVisibility="Auto"
+                                          PointerWheelChanged="OnMapPointerWheelChanged"
+                                          PointerMoved="OnMapPointerMoved"
+                                          PointerPressed="OnMapPointerPressed">
+                                <Image Name="WorldMapImage" 
+                                       Source="{Binding WorldMapBitmap}"
+                                       Stretch="None">
+                                    <Image.RenderTransform>
+                                        <ScaleTransform ScaleX="{Binding ZoomLevel}" ScaleY="{Binding ZoomLevel}"/>
+                                    </Image.RenderTransform>
+                                </Image>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                    
+                    <!-- Footer with Stats and Cell Details -->
+                    <Grid Grid.Row="2" ColumnDefinitions="*,300">
+                        <!-- Stats -->
+                        <Grid ColumnDefinitions="*,*,*,*">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="WORLD SIZE" FontSize="10" Foreground="#6c7086"/>
+                                <TextBlock Text="{Binding WorldSizeDisplay}" FontWeight="SemiBold" Foreground="#89b4fa"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="TOTAL ITEMS" FontSize="10" Foreground="#6c7086"/>
+                                <TextBlock Text="{Binding TotalItemsCount}" FontWeight="SemiBold" Foreground="#a6e3a1"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="4">
+                                <TextBlock Text="CELLS WITH ITEMS" FontSize="10" Foreground="#6c7086"/>
+                                <TextBlock Text="{Binding CellsWithItemsCount}" FontWeight="SemiBold" Foreground="#f9e2af"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" Spacing="4">
+                                <TextBlock Text="HOVER" FontSize="10" Foreground="#6c7086"/>
+                                <TextBlock Text="{Binding HoveredCellInfo}" FontWeight="SemiBold" Foreground="#cba6f7" 
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- Cell Details Panel -->
+                        <Border Grid.Column="1" Background="#1e1e2e" CornerRadius="8" Padding="12" Margin="16,0,0,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="CELL DETAILS" FontWeight="Bold" FontSize="12" Foreground="#cba6f7"/>
+                                <TextBlock Text="{Binding SelectedCellInfo}" FontSize="13" Foreground="#cdd6f4" TextWrapping="Wrap"/>
+                                <ItemsControl ItemsSource="{Binding SelectedCellItems}" MaxHeight="100">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="11" Foreground="#89b4fa" Margin="0,2"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            
+            
         </TabControl>
         
         <!-- ═══════════════════════════════════════════════════════════════════ -->

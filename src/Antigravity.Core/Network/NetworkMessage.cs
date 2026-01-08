@@ -18,9 +18,11 @@ namespace Antigravity.Core.Network
         GameStart = 14,         // All ready, start playing
         
         // Sync messages
-        SyncCheck = 20,         // Periodic sync verification
-        SyncResponse = 21,      // Client's sync checksum
+        SyncCheck = 20,         // Periodic sync verification (host sends checksums)
+        SyncResponse = 21,      // Client's sync checksum response
         SyncRequest = 22,       // Request full sync
+        SyncCategoryData = 23,  // Partial sync data for specific category
+        SyncCategoryChunk = 24, // Chunk of category sync data (for large data)
         
         // Command messages
         Command = 30,           // Player command (dig, build, etc)
@@ -39,7 +41,19 @@ namespace Antigravity.Core.Network
         Ping = 60,
         Pong = 61,
         Error = 62,
-        Disconnect = 63
+        Disconnect = 63,
+        Heartbeat = 64,             // Periodic heartbeat from host
+        HeartbeatAck = 65,          // Client acknowledges heartbeat
+        
+        // Reconnection and sync
+        PlayerJoined = 70,          // New player joined mid-game
+        PlayerLeft = 71,            // Player left the game
+        SyncPauseRequest = 72,      // Request all clients to pause for sync
+        SyncResumeRequest = 73,     // Resume after sync complete
+        ResyncWorldData = 74,       // Full world resync for reconnecting player
+        
+        // System notifications
+        SystemMessage = 80          // System notification (desync, errors, etc)
     }
 
     /// <summary>
@@ -189,6 +203,29 @@ namespace Antigravity.Core.Network
         /// Timestamp of the message.
         /// </summary>
         public long Timestamp { get; set; }
+        
+        /// <summary>
+        /// Type of message (player or system).
+        /// </summary>
+        public ChatMessageType MessageType { get; set; }
+        
+        /// <summary>
+        /// Level for system messages (info, warning, error).
+        /// </summary>
+        public SystemMessageLevel SystemLevel { get; set; }
+    }
+    
+    public enum ChatMessageType : byte
+    {
+        Player = 0,
+        System = 1
+    }
+    
+    public enum SystemMessageLevel : byte
+    {
+        Info = 0,
+        Warning = 1,
+        Error = 2
     }
 
     /// <summary>

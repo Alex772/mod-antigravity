@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Antigravity.Core;
 using Antigravity.Core.Network;
+using Antigravity.Client.UI;
 
 namespace Antigravity.Client
 {
@@ -210,6 +211,11 @@ namespace Antigravity.Client
                 _inLobby = true;
                 RefreshUI();
                 SetStatus(NetworkBackendManager.IsHost ? "Hosting! Waiting for connections..." : "Connected!", Color.green);
+                
+                // Show welcome message in chat
+                ChatManager.SendSystemMessage(NetworkBackendManager.IsHost 
+                    ? "🎮 Lobby created! Waiting for players..." 
+                    : "🔗 Connected to lobby!");
             };
 
             NetworkBackendManager.OnDisconnected += (s, e) =>
@@ -477,132 +483,22 @@ namespace Antigravity.Client
         #region UI Helpers
 
         private GameObject CreatePanel(string name, Transform parent)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-            obj.AddComponent<RectTransform>();
-            return obj;
-        }
+            => UIFactory.CreatePanel(name, parent);
 
         private GameObject CreateText(string name, Transform parent, string text, int fontSize)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(500, 40);
-
-            var textComp = obj.AddComponent<Text>();
-            textComp.text = text;
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = fontSize;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.color = Color.white;
-
-            return obj;
-        }
+            => UIFactory.CreateText(name, parent, text, fontSize);
 
         private GameObject CreateButton(string name, Transform parent, string text, UnityEngine.Events.UnityAction onClick)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(200, 50);
-
-            var image = obj.AddComponent<Image>();
-            image.color = new Color(0.25f, 0.45f, 0.75f, 1f);
-
-            var button = obj.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(onClick);
-
-            var colors = button.colors;
-            colors.normalColor = new Color(0.25f, 0.45f, 0.75f, 1f);
-            colors.highlightedColor = new Color(0.35f, 0.55f, 0.85f, 1f);
-            colors.pressedColor = new Color(0.2f, 0.35f, 0.65f, 1f);
-            button.colors = colors;
-
-            var textObj = new GameObject("Text");
-            textObj.transform.SetParent(obj.transform, false);
-
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            var textComp = textObj.AddComponent<Text>();
-            textComp.text = text;
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = 18;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.color = Color.white;
-
-            return obj;
-        }
+            => UIFactory.CreateButton(name, parent, text, onClick);
 
         private InputField CreateInputField(string name, Transform parent, string placeholder)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent, false);
-
-            var rect = obj.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(300, 40);
-
-            var image = obj.AddComponent<Image>();
-            image.color = new Color(0.2f, 0.2f, 0.25f, 1f);
-
-            var placeholderObj = new GameObject("Placeholder");
-            placeholderObj.transform.SetParent(obj.transform, false);
-            var phRect = placeholderObj.AddComponent<RectTransform>();
-            phRect.anchorMin = Vector2.zero;
-            phRect.anchorMax = Vector2.one;
-            phRect.offsetMin = new Vector2(10, 0);
-            phRect.offsetMax = new Vector2(-10, 0);
-            var phText = placeholderObj.AddComponent<Text>();
-            phText.text = placeholder;
-            phText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            phText.fontSize = 14;
-            phText.color = new Color(0.5f, 0.5f, 0.5f, 1f);
-            phText.alignment = TextAnchor.MiddleCenter;
-
-            var textObj = new GameObject("Text");
-            textObj.transform.SetParent(obj.transform, false);
-            var textRect = textObj.AddComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(10, 0);
-            textRect.offsetMax = new Vector2(-10, 0);
-            var textComp = textObj.AddComponent<Text>();
-            textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            textComp.fontSize = 16;
-            textComp.color = Color.white;
-            textComp.alignment = TextAnchor.MiddleCenter;
-            textComp.supportRichText = false;
-
-            var inputField = obj.AddComponent<InputField>();
-            inputField.textComponent = textComp;
-            inputField.placeholder = phText;
-
-            return inputField;
-        }
+            => UIFactory.CreateInputField(name, parent, placeholder);
 
         private void SetFullScreen(GameObject obj)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.sizeDelta = Vector2.zero;
-        }
+            => obj.SetFullScreen();
 
         private void SetCenteredRect(GameObject obj, float width, float height)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(width, height);
-            rect.anchoredPosition = Vector2.zero;
-        }
+            => obj.SetCenteredRect(width, height);
 
         private void SetAnchoredPosition(GameObject obj, float x, float y)
         {
@@ -611,10 +507,7 @@ namespace Antigravity.Client
         }
 
         private void SetSize(GameObject obj, float width, float height)
-        {
-            var rect = obj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(width, height);
-        }
+            => obj.SetSize(width, height);
 
         #endregion
     }

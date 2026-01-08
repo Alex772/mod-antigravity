@@ -32,8 +32,13 @@ namespace Antigravity.Client
                 // Add RemoteCursorManager for cursor sync
                 _updaterObject.AddComponent<RemoteCursorManager>();
                 
+                // Add UI overlays
+                _updaterObject.AddComponent<ChatOverlay>();
+                _updaterObject.AddComponent<CursorCoordsOverlay>();
+                _updaterObject.AddComponent<ModSettingsPanel>();
+                
                 DontDestroyOnLoad(_updaterObject);
-                Debug.Log("[Antigravity] MultiplayerUpdater created.");
+                Debug.Log("[Antigravity] MultiplayerUpdater created with UI overlays.");
             }
         }
 
@@ -71,6 +76,10 @@ namespace Antigravity.Client
         // Position sync timer (Host only, every 2 seconds)
         private float _positionSyncTimer = 0f;
         private const float POSITION_SYNC_INTERVAL = 2f;
+        
+        // Item sync timer (Host only, every 10 seconds)
+        private float _itemSyncTimer = 0f;
+        private const float ITEM_SYNC_INTERVAL = 10f;
 
         private void Update()
         {
@@ -113,6 +122,17 @@ namespace Antigravity.Client
                         _checksumTimer = 0f;
                         Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendMinionChecksums();
                     }
+                    
+                    // Item sync (every 10 seconds)
+                    _itemSyncTimer += Time.deltaTime;
+                    if (_itemSyncTimer >= ITEM_SYNC_INTERVAL)
+                    {
+                        _itemSyncTimer = 0f;
+                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendItemSync();
+                    }
+                    
+                    // Element sync (continuous delta broadcast)
+                    Antigravity.Core.Sync.ElementSyncManager.Instance.Update();
                 }
                 else
                 {

@@ -72,6 +72,9 @@ namespace Antigravity
                 // Apply game patches
                 Patches.PatchManager.ApplyPatches(HarmonyInstance);
                 
+                // Register Steam join callback early (so invites work from friend list)
+                Core.Network.SteamNetworkManager.EnsureJoinCallbackRegistered();
+                
                 Logger.Log("Core systems initialized successfully.");
             }
             catch (System.Exception ex)

@@ -97,86 +97,189 @@ namespace Antigravity.Core.Sync
 
         /// <summary>
         /// Force a specific chore on a client Duplicant.
-        /// This overrides the local Brain's decision.
+        /// Uses improved matching with TargetPrefabId, with navigation fallback.
         /// </summary>
         private void ForceChoreOnClient(MinionIdentity minion, ChoreStartCommand cmd)
         {
-            Debug.Log($"[Antigravity] CLIENT: Forcing chore {cmd.ChoreTypeId} on {minion.name}");
+            Debug.Log($"[Antigravity] CLIENT: Forcing chore {cmd.ChoreTypeId} on {minion.name} at cell {cmd.TargetCell}");
 
-            // Get the ChoreDriver
-            ChoreDriver choreDriver = minion.GetComponent<ChoreDriver>();
-            if (choreDriver == null)
+            // Temporarily enable ChoreConsumer for chore assignment
+            ChoreConsumer consumer = minion.GetComponent<ChoreConsumer>();
+            bool wasEnabled = consumer != null && consumer.enabled;
+            if (consumer != null && !wasEnabled)
             {
-                Debug.LogError($"[Antigravity] No ChoreDriver found on {minion.name}");
-                return;
+                consumer.enabled = true;
             }
 
-            // Find the target chore by iterating through available chores
-            // We need to find a chore that matches:
-            // 1. The chore type ID
-            // 2. The target cell (if specified)
-            
-            ChoreConsumer choreConsumer = minion.GetComponent<ChoreConsumer>();
-            if (choreConsumer == null)
+            try
             {
-                Debug.LogError($"[Antigravity] No ChoreConsumer found on {minion.name}");
-                return;
-            }
-
-            // Get the ChoreType from the database
-            ChoreType targetChoreType = null;
-            foreach (var ct in Db.Get().ChoreTypes.resources)
-            {
-                if (ct.Id == cmd.ChoreTypeId)
+                // Step 1: Try to find and assign a matching chore from preconditions
+                if (TryAssignChoreFromPreconditions(minion, cmd))
                 {
-                    targetChoreType = ct;
-                    break;
+                    return; // Success!
                 }
-            }
 
-            if (targetChoreType == null)
-            {
-                Debug.LogWarning($"[Antigravity] ChoreType '{cmd.ChoreTypeId}' not found in database!");
-                return;
-            }
-
-            // Try to find a matching chore from the precondition snapshot
-            var snapshot = choreConsumer.GetLastSuccessfulPreconditionSnapshot();
-            Chore.Precondition.Context? bestMatch = null;
-
-            foreach (var ctx in snapshot.succeededContexts)
-            {
-                if (ctx.chore == null) continue;
-                if (ctx.chore.choreType.Id != cmd.ChoreTypeId) continue;
-
-                // Check if target cell matches (if specified)
-                if (cmd.TargetCell > 0 && ctx.chore.target != null)
+                // Step 2: Try to find target by cell + prefab and navigate there
+                if (TryNavigateToChoreTarget(minion, cmd))
                 {
-                    int choreCell = Grid.PosToCell(ctx.chore.target.gameObject);
-                    if (choreCell == cmd.TargetCell)
+                    Debug.Log($"[Antigravity] CLIENT: Chore not found, navigating to target instead");
+                    return;
+                }
+
+                // Step 3: Fallback - just move to the cell
+                if (cmd.TargetCell > 0 && Grid.IsValidCell(cmd.TargetCell))
+                {
+                    var navigator = minion.GetComponent<Navigator>();
+                    if (navigator != null)
                     {
-                        bestMatch = ctx;
-                        break; // Exact match
+                        navigator.GoTo(cmd.TargetCell);
+                        Debug.Log($"[Antigravity] CLIENT: Fallback - navigating {minion.name} to cell {cmd.TargetCell}");
+                        return;
                     }
                 }
-                else
+
+                // Store for retry if all else fails
+                Debug.LogWarning($"[Antigravity] CLIENT: Could not force chore {cmd.ChoreTypeId}, storing for retry");
+                StorePendingChore(minion, cmd);
+            }
+            finally
+            {
+                // Re-disable ChoreConsumer if it was disabled before
+                if (consumer != null && !wasEnabled)
                 {
-                    // No specific target, take first match
-                    bestMatch = ctx;
+                    consumer.enabled = false;
                 }
             }
+        }
 
-            if (bestMatch.HasValue)
+        /// <summary>
+        /// Try to find and assign a matching chore.
+        /// </summary>
+        private bool TryAssignChoreFromPreconditions(MinionIdentity minion, ChoreStartCommand cmd)
+        {
+            ChoreDriver choreDriver = minion.GetComponent<ChoreDriver>();
+            ChoreConsumer choreConsumer = minion.GetComponent<ChoreConsumer>();
+            
+            if (choreDriver == null || choreConsumer == null) return false;
+
+            // First try the preconditions snapshot if it has data
+            var snapshot = choreConsumer.GetLastSuccessfulPreconditionSnapshot();
+            if (snapshot.succeededContexts != null && snapshot.succeededContexts.Count > 0)
             {
-                Debug.Log($"[Antigravity] CLIENT: Found matching chore, forcing assignment");
-                choreDriver.SetChore(bestMatch.Value);
+                foreach (var ctx in snapshot.succeededContexts)
+                {
+                    if (ctx.chore == null || ctx.chore.choreType == null) continue;
+                    if (ctx.chore.choreType.Id != cmd.ChoreTypeId) continue;
+
+                    // Check if target matches
+                    if (cmd.TargetCell > 0 && ctx.chore.target != null)
+                    {
+                        int choreCell = Grid.PosToCell(ctx.chore.target.gameObject);
+                        if (choreCell == cmd.TargetCell)
+                        {
+                            Debug.Log($"[Antigravity] CLIENT: Found matching chore from preconditions, assigning");
+                            choreDriver.SetChore(ctx);
+                            return true;
+                        }
+                    }
+                    else if (cmd.TargetCell <= 0)
+                    {
+                        // No target cell - match by type only
+                        Debug.Log($"[Antigravity] CLIENT: Found matching chore by type, assigning");
+                        choreDriver.SetChore(ctx);
+                        return true;
+                    }
+                }
+            }
+            
+            // Try to find a new chore using ChoreConsumer
+            try
+            {
+                // Force refresh to find available chores
+                Chore.Precondition.Context outContext = default;
+                if (choreConsumer.FindNextChore(ref outContext))
+                {
+                    if (outContext.chore != null && outContext.chore.choreType != null)
+                    {
+                        if (outContext.chore.choreType.Id == cmd.ChoreTypeId)
+                        {
+                            Debug.Log($"[Antigravity] CLIENT: Found matching chore via FindNextChore, assigning");
+                            choreDriver.SetChore(outContext);
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[Antigravity] FindNextChore failed: {ex.Message}");
+            }
+
+            Debug.Log($"[Antigravity] CLIENT: No matching chore found for {cmd.ChoreTypeId}");
+            return false;
+        }
+
+        /// <summary>
+        /// Navigate to the chore target location.
+        /// </summary>
+        private bool TryNavigateToChoreTarget(MinionIdentity minion, ChoreStartCommand cmd)
+        {
+            // Need a valid target cell
+            if (cmd.TargetCell <= 0 || !Grid.IsValidCell(cmd.TargetCell)) return false;
+
+            var navigator = minion.GetComponent<Navigator>();
+            if (navigator == null) return false;
+
+            // Find object at target cell matching prefab (if specified)
+            GameObject targetObject = null;
+            if (!string.IsNullOrEmpty(cmd.TargetPrefabId))
+            {
+                targetObject = FindObjectAtCell(cmd.TargetCell, cmd.TargetPrefabId);
+            }
+
+            if (targetObject != null)
+            {
+                // Navigate to the object's cell
+                int cellToNavigate = Grid.PosToCell(targetObject.transform.position);
+                navigator.GoTo(cellToNavigate);
+                return true;
             }
             else
             {
-                Debug.LogWarning($"[Antigravity] CLIENT: No matching chore found for {cmd.ChoreTypeId} at cell {cmd.TargetCell}. Will retry on next snapshot.");
-                // Store pending chore to retry
-                StorePendingChore(minion, cmd);
+                // Just navigate to the target cell
+                navigator.GoTo(cmd.TargetCell);
+                return true;
             }
+        }
+
+        /// <summary>
+        /// Find a GameObject at a specific cell with a matching prefab ID.
+        /// </summary>
+        private GameObject FindObjectAtCell(int cell, string prefabId)
+        {
+            // Check for any KPrefabIDs at this cell
+            var objectLayer = Grid.ObjectLayers[(int)ObjectLayer.Building];
+            if (objectLayer.TryGetValue(cell, out var go) && go != null)
+            {
+                var kpid = go.GetComponent<KPrefabID>();
+                if (kpid != null && kpid.PrefabTag.ToString() == prefabId)
+                {
+                    return go;
+                }
+            }
+
+            // Also check pickupables layer
+            objectLayer = Grid.ObjectLayers[(int)ObjectLayer.Pickupables];
+            if (objectLayer.TryGetValue(cell, out go) && go != null)
+            {
+                var kpid = go.GetComponent<KPrefabID>();
+                if (kpid != null && kpid.PrefabTag.ToString() == prefabId)
+                {
+                    return go;
+                }
+            }
+
+            return null;
         }
 
         // Pending chores that couldn't be assigned immediately
@@ -406,15 +509,49 @@ namespace Antigravity.Core.Sync
                 Vector3 pos = minion.transform.position;
                 Navigator navigator = minion.GetComponent<Navigator>();
                 
+                // Movement data
                 int targetCell = -1;
                 bool isMoving = false;
                 if (navigator != null)
                 {
                     isMoving = navigator.IsMoving();
-                    // Get target cell if available
                     if (navigator.target != null)
                     {
                         targetCell = Grid.PosToCell(navigator.target);
+                    }
+                }
+                
+                // Chore data - extract from ChoreDriver
+                string choreTypeId = null;
+                string choreGroupId = null;
+                int choreTargetCell = -1;
+                string choreTargetPrefabId = null;
+                
+                ChoreDriver choreDriver = minion.GetComponent<ChoreDriver>();
+                if (choreDriver != null && choreDriver.GetCurrentChore() != null)
+                {
+                    Chore currentChore = choreDriver.GetCurrentChore();
+                    if (currentChore.choreType != null)
+                    {
+                        choreTypeId = currentChore.choreType.Id;
+                        
+                        // Get chore group
+                        if (currentChore.choreType.groups != null && currentChore.choreType.groups.Length > 0)
+                        {
+                            choreGroupId = currentChore.choreType.groups[0]?.Id;
+                        }
+                    }
+                    
+                    // Get chore target
+                    if (currentChore.target != null && currentChore.target.gameObject != null)
+                    {
+                        choreTargetCell = Grid.PosToCell(currentChore.target.gameObject);
+                        
+                        var kpid = currentChore.target.gameObject.GetComponent<KPrefabID>();
+                        if (kpid != null)
+                        {
+                            choreTargetPrefabId = kpid.PrefabTag.ToString();
+                        }
                     }
                 }
 
@@ -426,7 +563,11 @@ namespace Antigravity.Core.Sync
                     PositionZ = pos.z,
                     CurrentCell = Grid.PosToCell(pos),
                     IsMoving = isMoving,
-                    TargetCell = targetCell
+                    TargetCell = targetCell,
+                    CurrentChoreTypeId = choreTypeId,
+                    CurrentChoreGroupId = choreGroupId,
+                    ChoreTargetCell = choreTargetCell,
+                    ChoreTargetPrefabId = choreTargetPrefabId
                 };
 
                 Commands.CommandManager.SendCommand(cmd);
@@ -435,6 +576,7 @@ namespace Antigravity.Core.Sync
 
         /// <summary>
         /// Apply a position sync from Host.
+        /// Makes client Duplicants follow the Host's movements.
         /// </summary>
         public void ApplyPositionSync(Commands.PositionSyncCommand cmd)
         {
@@ -446,13 +588,109 @@ namespace Antigravity.Core.Sync
 
             Vector3 hostPos = new Vector3(cmd.PositionX, cmd.PositionY, cmd.PositionZ);
             Vector3 localPos = minion.transform.position;
-
-            // Check distance - only correct if drift is significant (> 1 cell)
             float distance = Vector3.Distance(hostPos, localPos);
-            if (distance > 1.5f)
+            
+            Navigator navigator = minion.GetComponent<Navigator>();
+            
+            // If host is moving and has a target, make client navigate there too
+            if (cmd.IsMoving && cmd.TargetCell >= 0 && navigator != null)
             {
-                Debug.Log($"[Antigravity] Position correction for {minion.name}: drift={distance:F2}");
+                int currentCell = Grid.PosToCell(localPos);
+                
+                // Only start new navigation if we're far from target or not already moving
+                if (!navigator.IsMoving() || currentCell != cmd.CurrentCell)
+                {
+                    // Navigate to the same target as the host
+                    navigator.GoTo(cmd.TargetCell);
+                }
+            }
+            else if (!cmd.IsMoving && navigator != null && navigator.IsMoving())
+            {
+                // Host stopped, we should stop too
+                navigator.Stop();
+            }
+            
+            // Correct position if drift is too large (teleport as fallback)
+            if (distance > 3f)
+            {
+                Debug.Log($"[Antigravity] Position teleport for {minion.name}: drift={distance:F2}");
                 minion.transform.SetPosition(hostPos);
+                
+                // Also stop any navigation since we teleported
+                if (navigator != null)
+                {
+                    navigator.Stop();
+                }
+            }
+            else if (distance > 1f && !cmd.IsMoving)
+            {
+                // Small drift while stationary - gently correct
+                minion.transform.SetPosition(hostPos);
+            }
+        }
+
+        #endregion
+
+        #region Item Sync
+
+        /// <summary>
+        /// [HOST] Send all pickupable items to clients for debugging/sync.
+        /// Call periodically (e.g., every 10 seconds or on demand).
+        /// </summary>
+        public void SendItemSync()
+        {
+            if (!Antigravity.Core.Network.MultiplayerState.IsHost) return;
+            if (!Antigravity.Core.Network.MultiplayerState.IsMultiplayerSession) return;
+
+            try
+            {
+                var itemList = new System.Collections.Generic.List<Commands.ItemSyncData>();
+                
+                // Get world dimensions
+                int worldWidth = Grid.WidthInCells;
+                int worldHeight = Grid.HeightInCells;
+                
+                // Collect all pickupables
+                var pickupables = Components.Pickupables?.Items;
+                if (pickupables != null)
+                {
+                    foreach (var pickupable in pickupables)
+                    {
+                        if (pickupable == null || !pickupable.gameObject.activeInHierarchy) continue;
+                        
+                        var pos = pickupable.transform.position;
+                        int cell = Grid.PosToCell(pos);
+                        
+                        var element = pickupable.GetComponent<PrimaryElement>();
+                        int elementId = element != null ? (int)element.ElementID : 0;
+                        float mass = element?.Mass ?? 0;
+                        
+                        var kpid = pickupable.GetComponent<KPrefabID>();
+                        string prefabId = kpid?.PrefabTag.ToString() ?? "Unknown";
+                        
+                        itemList.Add(new Commands.ItemSyncData
+                        {
+                            Cell = cell,
+                            PrefabId = prefabId,
+                            Mass = mass,
+                            ElementId = elementId
+                        });
+                    }
+                }
+                
+                var cmd = new Commands.ItemSyncCommand
+                {
+                    WorldWidth = worldWidth,
+                    WorldHeight = worldHeight,
+                    Items = itemList
+                };
+                
+                Commands.CommandManager.SendCommand(cmd);
+                Debug.Log($"[Antigravity] ItemSync sent: {itemList.Count} items in {worldWidth}x{worldHeight} world");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[Antigravity] Error in SendItemSync: {ex.Message}");
             }
         }
 

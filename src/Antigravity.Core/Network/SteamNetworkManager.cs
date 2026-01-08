@@ -22,6 +22,7 @@ namespace Antigravity.Core.Network
         public static event SteamPlayerEventHandler OnPlayerJoined;
         public static event SteamPlayerEventHandler OnPlayerLeft;
         public static event SteamDataEventHandler OnDataReceived;
+        public static event System.Action<CSteamID> OnJoinInviteReceived;
 
         // State
         public static bool IsInitialized { get; private set; }
@@ -41,6 +42,34 @@ namespace Antigravity.Core.Network
         private static Callback<GameLobbyJoinRequested_t> _lobbyJoinRequestedCallback;
         private static Callback<LobbyChatUpdate_t> _lobbyChatUpdateCallback;
         private static Callback<P2PSessionRequest_t> _p2pSessionRequestCallback;
+        private static bool _joinCallbackRegistered = false;
+
+        /// <summary>
+        /// Register the Steam lobby join callback early so invites work even before opening multiplayer menu.
+        /// Call this from mod initialization.
+        /// </summary>
+        public static void EnsureJoinCallbackRegistered()
+        {
+            if (_joinCallbackRegistered) return;
+            
+            try
+            {
+                if (!SteamManager.Initialized)
+                {
+                    Debug.Log("[Antigravity] Steam not ready yet, will register join callback later.");
+                    return;
+                }
+
+                LocalSteamId = SteamUser.GetSteamID();
+                _lobbyJoinRequestedCallback = Callback<GameLobbyJoinRequested_t>.Create(OnLobbyJoinRequested);
+                _joinCallbackRegistered = true;
+                Debug.Log("[Antigravity] Steam join invite callback registered early.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[Antigravity] Failed to register early join callback: {ex.Message}");
+            }
+        }
 
         /// <summary>
         /// Initialize Steam networking.
@@ -265,6 +294,11 @@ namespace Antigravity.Core.Network
         private static void OnLobbyJoinRequested(GameLobbyJoinRequested_t result)
         {
             Debug.Log($"[Antigravity] Join request from Steam overlay for lobby: {result.m_steamIDLobby}");
+            
+            // Fire event to let UI layer show lobby screen
+            OnJoinInviteReceived?.Invoke(result.m_steamIDLobby);
+            
+            // Join the lobby
             JoinLobby(result.m_steamIDLobby);
         }
 

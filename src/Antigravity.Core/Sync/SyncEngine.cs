@@ -56,6 +56,9 @@ namespace Antigravity.Core.Sync
             SyncErrorCount = 0;
             LastHardSyncTick = 0;
             IsRunning = false;
+            
+            // Initialize partial sync manager
+            PartialSyncManager.Initialize();
         }
 
         /// <summary>
@@ -88,6 +91,21 @@ namespace Antigravity.Core.Sync
 
             // Process pending commands at this tick
             Commands.CommandDispatcher.ProcessPendingCommands();
+
+            // Update partial sync manager (periodic verification)
+            PartialSyncManager.Update();
+            
+            // HOST: Periodic position sync every ~2 seconds (120 ticks at 60 FPS)
+            if (Network.MultiplayerState.IsHost && CurrentTick % 120 == 0)
+            {
+                DuplicantSyncManager.Instance?.SendPositionSync();
+            }
+            
+            // HOST: Periodic item sync every ~10 seconds (600 ticks at 60 FPS)
+            if (Network.MultiplayerState.IsHost && CurrentTick % 600 == 0)
+            {
+                DuplicantSyncManager.Instance?.SendItemSync();
+            }
 
             // Check if we need a hard sync
             CheckHardSync();
@@ -177,9 +195,22 @@ namespace Antigravity.Core.Sync
         /// </summary>
         public static long CalculateStateChecksum()
         {
-            // TODO: Implement actual checksum calculation
-            // This should hash relevant game state values
-            return 0;
+            try
+            {
+                var checksums = WorldStateHasher.CalculateAllChecksums();
+                
+                // Combine all category checksums into one
+                long combined = checksums.PickupablesChecksum;
+                combined = combined * 31 + checksums.BuildingsChecksum;
+                combined = combined * 31 + checksums.DuplicantsChecksum;
+                combined = combined * 31 + checksums.ConduitsChecksum;
+                
+                return combined;
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         /// <summary>

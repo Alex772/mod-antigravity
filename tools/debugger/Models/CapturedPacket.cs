@@ -98,6 +98,9 @@ public static class GameCommandTypes
         { 110, "ChoreStart" }, { 111, "ChoreEnd" }, { 112, "NavigateTo" },
         { 113, "DuplicantFullState" }, { 114, "DuplicantChecksum" }, { 115, "PositionSync" },
         { 116, "RandomSeedSync" }, { 117, "DuplicantCommandRequest" },
+        // World sync
+        { 118, "ItemSync" },
+        { 119, "ElementChange" },
         // Generic
         { 100, "Custom" }
     };

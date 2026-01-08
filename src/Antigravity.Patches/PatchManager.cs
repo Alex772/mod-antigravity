@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Database;
 
 namespace Antigravity.Patches
 {
@@ -103,7 +104,13 @@ namespace Antigravity.Patches
             ApplyCaptureSyncPatches(harmony);
             ApplyPrioritizeSyncPatches(harmony);
             ApplyDoorSyncPatches(harmony);
-            ApplyBuildingSettingsSyncPatches(harmony);
+            // ApplyBuildingSettingsSyncPatches(harmony); // DISABLED TO TEST CRASH
+            
+            // TEMPORARILY DISABLED FOR DEBUGGING - uncomment after testing
+            // ApplyHardSyncPatches(harmony);
+            // ApplyResearchPatches(harmony);
+            // ApplySkillsPatches(harmony);
+            // ApplySchedulePatches(harmony);
         }
 
         private static void ApplySpeedSyncPatches(Harmony harmony)
@@ -426,7 +433,211 @@ namespace Antigravity.Patches
                 UnityEngine.Debug.LogWarning("[Antigravity] TreeFilterable.UpdateFilters method NOT FOUND!");
             }
 
+            // Patch Filterable.SelectedTag setter - for element filter changes (valves, pumps)
+            var filterableTagProperty = AccessTools.PropertySetter(typeof(Filterable), "SelectedTag");
+            if (filterableTagProperty != null)
+            {
+                harmony.Patch(
+                    filterableTagProperty,
+                    postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.Filterable_SelectedTag_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Filterable.SelectedTag patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Filterable.SelectedTag setter NOT FOUND!");
+            }
+
+            // LogicSwitch patch DISABLED - causes Harmony error because SetState is a virtual method
+            // inherited from Switch base class. To fix this, we would need to patch Switch.SetState instead,
+            // but that would affect all switches, not just LogicSwitch.
+            // var logicSwitchToggleMethod = AccessTools.Method(typeof(LogicSwitch), "OnLogicValueChanged");
+            // ... patch code removed to prevent crash ...
+
+            // Patch common threshold switches (sensors)
+            // Only patch LogicTemperatureSensor and LogicPressureSensor which definitely exist
+            var thresholdTypes = new System.Type[] { 
+                typeof(LogicTemperatureSensor), 
+                typeof(LogicPressureSensor)
+            };
+            
+            foreach (var sensorType in thresholdTypes)
+            {
+                try
+                {
+                    var thresholdSetter = AccessTools.PropertySetter(sensorType, "Threshold");
+                    if (thresholdSetter != null)
+                    {
+                        harmony.Patch(
+                            thresholdSetter,
+                            postfix: new HarmonyMethod(typeof(Commands.BuildingSettingsSyncPatches.ThresholdSwitch_SetThreshold_Patch), "Postfix")
+                        );
+                        UnityEngine.Debug.Log($"[Antigravity] {sensorType.Name}.Threshold patch applied.");
+                    }
+                }
+                catch { }
+            }
+
             UnityEngine.Debug.Log("[Antigravity] Building settings sync patches applied.");
+        }
+
+        private static void ApplyHardSyncPatches(Harmony harmony)
+        {
+            // Patch GameClock for new day detection
+            // GameClock fires an event when a new day starts
+            var onNewDayMethod = AccessTools.Method(typeof(GameClock), "OnNewDay");
+            if (onNewDayMethod != null)
+            {
+                harmony.Patch(
+                    onNewDayMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.HardSyncPatches.GameClock_OnNewDay_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] GameClock.OnNewDay patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] GameClock.OnNewDay method NOT FOUND!");
+            }
+
+            // Patch SaveLoader.Save for manual save detection
+            var saveMethod = AccessTools.Method(typeof(SaveLoader), "Save", new System.Type[] { typeof(string), typeof(bool), typeof(bool) });
+            if (saveMethod != null)
+            {
+                harmony.Patch(
+                    saveMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.HardSyncPatches.SaveLoader_Save_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SaveLoader.Save patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] SaveLoader.Save method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Hard sync patches applied.");
+        }
+
+        private static void ApplyResearchPatches(Harmony harmony)
+        {
+            // Patch Research.SetActiveResearch - when player selects a tech
+            var setActiveMethod = AccessTools.Method(typeof(Research), "SetActiveResearch", new System.Type[] { typeof(Tech), typeof(bool) });
+            if (setActiveMethod != null)
+            {
+                harmony.Patch(
+                    setActiveMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.ResearchPatches.Research_SetActiveResearch_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Research.SetActiveResearch patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Research.SetActiveResearch method NOT FOUND!");
+            }
+
+            // Patch TechInstance.Purchased - when a tech is completed
+            var techPurchasedMethod = AccessTools.Method(typeof(TechInstance), "Purchased");
+            if (techPurchasedMethod != null)
+            {
+                harmony.Patch(
+                    techPurchasedMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.ResearchPatches.TechInstance_Complete_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] TechInstance.Purchased patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] TechInstance.Purchased method NOT FOUND!");
+            }
+
+            // Patch Research.CancelResearch - when research is cancelled
+            var cancelMethod = AccessTools.Method(typeof(Research), "CancelResearch");
+            if (cancelMethod != null)
+            {
+                harmony.Patch(
+                    cancelMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.ResearchPatches.Research_CancelResearch_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Research.CancelResearch patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Research.CancelResearch method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Research patches applied.");
+        }
+
+        private static void ApplySkillsPatches(Harmony harmony)
+        {
+            // Patch MinionResume.MasterSkill - when player assigns a skill
+            var masterSkillMethod = AccessTools.Method(typeof(MinionResume), "MasterSkill", new System.Type[] { typeof(Skill) });
+            if (masterSkillMethod != null)
+            {
+                harmony.Patch(
+                    masterSkillMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.SkillsPatches.MinionResume_MasterSkill_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] MinionResume.MasterSkill patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] MinionResume.MasterSkill method NOT FOUND!");
+            }
+
+            // Patch MinionResume.UnmasterSkill - when player removes a skill
+            var unmasterSkillMethod = AccessTools.Method(typeof(MinionResume), "UnmasterSkill", new System.Type[] { typeof(Skill) });
+            if (unmasterSkillMethod != null)
+            {
+                harmony.Patch(
+                    unmasterSkillMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.SkillsPatches.MinionResume_UnmasterSkill_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] MinionResume.UnmasterSkill patch applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] MinionResume.UnmasterSkill method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Skills patches applied.");
+        }
+
+        private static void ApplySchedulePatches(Harmony harmony)
+        {
+            // Patch Schedule.SetBlocksToGroupDefaults - when player changes a block
+            var setBlockMethod = AccessTools.Method(typeof(Schedule), "SetBlocksToGroupDefaults");
+            if (setBlockMethod != null)
+            {
+                harmony.Patch(
+                    setBlockMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.SchedulePatches.Schedule_SetBlockType_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Schedule.SetBlocksToGroupDefaults patch applied.");
+            }
+
+            // Patch ScheduleManager.AddSchedule - when new schedule is created
+            var addScheduleMethod = AccessTools.Method(typeof(ScheduleManager), "AddSchedule");
+            if (addScheduleMethod != null)
+            {
+                harmony.Patch(
+                    addScheduleMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.SchedulePatches.ScheduleManager_AddSchedule_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] ScheduleManager.AddSchedule patch applied.");
+            }
+
+            // Patch ScheduleManager.DeleteSchedule - when schedule is deleted
+            var deleteScheduleMethod = AccessTools.Method(typeof(ScheduleManager), "DeleteSchedule");
+            if (deleteScheduleMethod != null)
+            {
+                harmony.Patch(
+                    deleteScheduleMethod,
+                    prefix: new HarmonyMethod(typeof(Sync.SchedulePatches.ScheduleManager_DeleteSchedule_Patch), "Prefix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] ScheduleManager.DeleteSchedule patch applied.");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Schedule patches applied.");
         }
 
         /// <summary>
