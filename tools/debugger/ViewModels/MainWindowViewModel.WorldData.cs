@@ -14,8 +14,6 @@ public partial class MainWindowViewModel
 {
     #region Stats and Processing
     
-    private void UpdateStats() => StatsText = $"↓{_currentSession.Stats.PacketsReceived} ↑{_currentSession.Stats.PacketsSent}";
-    
     /// <summary>
     /// Update World Data tab statistics when a packet is received
     /// </summary>

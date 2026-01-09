@@ -199,6 +199,25 @@ public partial class MainWindowViewModel : ViewModelBase
             _currentSession.Stats.BytesReceived += packet.RawData.Length;
             UpdateStats();
             UpdateWorldDataStats(packet);
+            
+            // Process map-related commands
+            if (packet.CommandTypeName == "ElementChange")
+            {
+                ProcessElementChangeCommand(packet);
+            }
+            else if (packet.CommandTypeName == "ItemSync")
+            {
+                ProcessItemSyncCommand(packet);
+            }
+            
+            // Process duplicant commands
+            if (packet.CommandTypeName == "PositionSync" || 
+                packet.CommandTypeName == "ChoreStart" ||
+                packet.CommandTypeName == "DuplicantChecksum" ||
+                packet.CommandTypeName == "DuplicantFullState")
+            {
+                ProcessDuplicantCommand(packet);
+            }
         });
         
         _networkService.PacketSent += (s, packet) => Dispatcher.UIThread.Post(() => {
@@ -223,10 +242,6 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadSavedCommands();
     }
     
-<<<<<<< HEAD
-<<<<<<< HEAD
-    #endregion
-=======
     private void AddPacket(CapturedPacket packet)
     {
         Packets.Insert(0, packet);
@@ -569,8 +584,6 @@ public partial class MainWindowViewModel : ViewModelBase
     }
     
     private void UpdateStats() => StatsText = $"↓{_currentSession.Stats.PacketsReceived} ↑{_currentSession.Stats.PacketsSent}";
->>>>>>> 3663ac0 (feat: Introduce network packet debugger and command synchronization for building settings and disconnects.)
-=======
+    
     #endregion
->>>>>>> 09d72f0 (falhando)
 }
