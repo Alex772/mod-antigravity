@@ -316,6 +316,10 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<DisconnectCommand>(payload);
                 case GameCommandType.SetStorageCapacity:
                     return MessageSerializer.DeserializePayload<StorageCapacityCommand>(payload);
+                case GameCommandType.SetAssignable:
+                    return MessageSerializer.DeserializePayload<AssignableCommand>(payload);
+                case GameCommandType.SetBuildingEnabled:
+                    return MessageSerializer.DeserializePayload<BuildingEnabledCommand>(payload);
                 case GameCommandType.ChoreStart:
                     return MessageSerializer.DeserializePayload<ChoreStartCommand>(payload);
                 case GameCommandType.ChoreEnd:
@@ -459,6 +463,12 @@ namespace Antigravity.Core.Commands
                         break;
                     case GameCommandType.SetStorageCapacity:
                         ExecuteStorageCapacityCommand(command as StorageCapacityCommand);
+                        break;
+                    case GameCommandType.SetAssignable:
+                        ExecuteAssignableCommand(command as AssignableCommand);
+                        break;
+                    case GameCommandType.SetBuildingEnabled:
+                        ExecuteBuildingEnabledCommand(command as BuildingEnabledCommand);
                         break;
                         
                     // Duplicant sync commands

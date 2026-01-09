@@ -70,6 +70,10 @@ namespace Antigravity.Core.Commands
         // Storage capacity
         SetStorageCapacity = 93,
         
+        // Assignable buildings (beds, toilets, etc.)
+        SetAssignable = 94,          // Assign/unassign duplicant to building
+        SetBuildingEnabled = 95,     // Enable/disable building
+        
         // Duplicant synchronization
         ChoreStart = 110,           // Duplicant started a chore
         ChoreEnd = 111,             // Duplicant ended a chore
@@ -386,6 +390,32 @@ namespace Antigravity.Core.Commands
         public string FilterLayer { get; set; }     // WIRES, LIQUIDCONDUIT, GASCONDUIT, SOLIDCONDUIT, LOGIC
 
         public DisconnectCommand() : base(GameCommandType.DisconnectUtility) { }
+    }
+
+    /// <summary>
+    /// Command to sync Assignable changes (beds, toilets, mess tables assigned to duplicants)
+    /// </summary>
+    [Serializable]
+    public class AssignableCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public string SlotId { get; set; }           // e.g., "Sleeper", "Toilet", "MessStation"
+        public string MinionName { get; set; }       // Duplicant name (null or empty = unassign)
+        public bool IsUnassign { get; set; }         // true = unassign, false = assign
+
+        public AssignableCommand() : base(GameCommandType.SetAssignable) { }
+    }
+
+    /// <summary>
+    /// Command to sync Building enabled/disabled state
+    /// </summary>
+    [Serializable]
+    public class BuildingEnabledCommand : GameCommand
+    {
+        public int Cell { get; set; }
+        public bool Enabled { get; set; }
+
+        public BuildingEnabledCommand() : base(GameCommandType.SetBuildingEnabled) { }
     }
 
     /// <summary>
