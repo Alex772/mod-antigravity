@@ -171,6 +171,13 @@ namespace Antigravity.Core.Sync
                     if (ctx.chore == null || ctx.chore.choreType == null) continue;
                     if (ctx.chore.choreType.Id != cmd.ChoreTypeId) continue;
 
+                    // IMPORTANT: Check if chore already has a driver assigned
+                    if (ctx.chore.driver != null)
+                    {
+                        Debug.Log($"[Antigravity] CLIENT: Chore already has driver {ctx.chore.driver.name}, skipping");
+                        continue;
+                    }
+
                     // Check if target matches
                     if (cmd.TargetCell > 0 && ctx.chore.target != null)
                     {
@@ -201,6 +208,13 @@ namespace Antigravity.Core.Sync
                 {
                     if (outContext.chore != null && outContext.chore.choreType != null)
                     {
+                        // IMPORTANT: Check if chore already has a driver
+                        if (outContext.chore.driver != null)
+                        {
+                            Debug.Log($"[Antigravity] CLIENT: Found chore but already has driver, skipping");
+                            return false;
+                        }
+                        
                         if (outContext.chore.choreType.Id == cmd.ChoreTypeId)
                         {
                             Debug.Log($"[Antigravity] CLIENT: Found matching chore via FindNextChore, assigning");
