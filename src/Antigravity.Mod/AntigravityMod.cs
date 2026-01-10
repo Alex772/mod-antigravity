@@ -27,7 +27,7 @@ namespace Antigravity
         /// <summary>
         /// Current mod version.
         /// </summary>
-        public const string Version = "0.0.2-alpha";
+        public const string Version = "0.0.3-alpha";
 
         /// <summary>
         /// Called when the mod is loaded.

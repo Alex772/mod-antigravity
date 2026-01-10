@@ -74,6 +74,9 @@ namespace Antigravity.Core.Commands
         SetAssignable = 94,          // Assign/unassign duplicant to building
         SetBuildingEnabled = 95,     // Enable/disable building
         
+        // Multiplayer ping
+        Ping = 96,                   // Player ping on map
+        
         // Duplicant synchronization
         ChoreStart = 110,           // Duplicant started a chore
         ChoreEnd = 111,             // Duplicant ended a chore
@@ -416,6 +419,20 @@ namespace Antigravity.Core.Commands
         public bool Enabled { get; set; }
 
         public BuildingEnabledCommand() : base(GameCommandType.SetBuildingEnabled) { }
+    }
+
+    /// <summary>
+    /// Command to send a ping to other players on the map
+    /// </summary>
+    [Serializable]
+    public class PingCommand : GameCommand
+    {
+        public int Cell { get; set; }        // Pinged cell
+        public string PlayerName { get; set; } // Who sent the ping
+        public float X { get; set; }         // World X position
+        public float Y { get; set; }         // World Y position
+
+        public PingCommand() : base(GameCommandType.Ping) { }
     }
 
     /// <summary>

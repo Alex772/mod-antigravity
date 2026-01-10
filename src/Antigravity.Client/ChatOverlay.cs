@@ -44,6 +44,13 @@ namespace Antigravity.Client
         
         void Update()
         {
+            // Check if window was destroyed (parent canvas was destroyed on scene change)
+            if (_windowObj == null)
+            {
+                CreateWindow();
+                return;
+            }
+            
             // Handle input when chat field is focused
             if (_isInputActive && _inputField != null)
             {
@@ -232,16 +239,16 @@ namespace Antigravity.Client
         
         private Canvas GetGameCanvas()
         {
-            // Try to find existing game UI canvas
-            var canvases = FindObjectsOfType<Canvas>();
-            foreach (var c in canvases)
+            // Always create our own canvas to ensure it persists between scenes
+            // Looking for existing Antigravity canvas first
+            var existingCanvas = GameObject.Find("AntigravityChatCanvas");
+            if (existingCanvas != null)
             {
-                if (c.renderMode == RenderMode.ScreenSpaceOverlay && c.gameObject.activeInHierarchy)
-                    return c;
+                return existingCanvas.GetComponent<Canvas>();
             }
             
-            // No suitable canvas found, create our own
-            Debug.Log("[Antigravity] ChatOverlay: No canvas found, creating dedicated canvas");
+            // Create dedicated canvas
+            Debug.Log("[Antigravity] ChatOverlay: Creating dedicated canvas");
             var canvasGo = new GameObject("AntigravityChatCanvas");
             DontDestroyOnLoad(canvasGo);
             

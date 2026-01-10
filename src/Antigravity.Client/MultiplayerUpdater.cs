@@ -36,6 +36,7 @@ namespace Antigravity.Client
                 _updaterObject.AddComponent<ChatOverlay>();
                 _updaterObject.AddComponent<CursorCoordsOverlay>();
                 _updaterObject.AddComponent<ModSettingsPanel>();
+                _updaterObject.AddComponent<PingManager>();
                 
                 DontDestroyOnLoad(_updaterObject);
                 Debug.Log("[Antigravity] MultiplayerUpdater created with UI overlays.");

@@ -28,7 +28,14 @@ namespace Antigravity.Client
         
         void Update()
         {
-            if (!_isVisible || _overlayObj == null || !_overlayObj.activeSelf) return;
+            // Check if overlay was destroyed (parent canvas was destroyed on scene change)
+            if (_overlayObj == null)
+            {
+                CreateOverlay();
+                return;
+            }
+            
+            if (!_isVisible || !_overlayObj.activeSelf) return;
             UpdateCoordinates();
         }
         
@@ -79,13 +86,26 @@ namespace Antigravity.Client
         
         private Canvas FindGameCanvas()
         {
-            var canvases = FindObjectsOfType<Canvas>();
-            foreach (var c in canvases)
+            // Use the same dedicated canvas as ChatOverlay for consistency
+            var existingCanvas = GameObject.Find("AntigravityChatCanvas");
+            if (existingCanvas != null)
             {
-                if (c.renderMode == RenderMode.ScreenSpaceOverlay)
-                    return c;
+                return existingCanvas.GetComponent<Canvas>();
             }
-            return canvases.Length > 0 ? canvases[0] : null;
+            
+            // Create dedicated canvas if ChatOverlay hasn't created one yet
+            Debug.Log("[Antigravity] CursorCoordsOverlay: Creating dedicated canvas");
+            var canvasGo = new GameObject("AntigravityChatCanvas");
+            DontDestroyOnLoad(canvasGo);
+            
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 999;
+            
+            canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>();
+            canvasGo.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            
+            return canvas;
         }
         
         private void UpdateCoordinates()

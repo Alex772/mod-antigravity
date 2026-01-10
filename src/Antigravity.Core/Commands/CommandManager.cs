@@ -320,6 +320,8 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<AssignableCommand>(payload);
                 case GameCommandType.SetBuildingEnabled:
                     return MessageSerializer.DeserializePayload<BuildingEnabledCommand>(payload);
+                case GameCommandType.Ping:
+                    return MessageSerializer.DeserializePayload<PingCommand>(payload);
                 case GameCommandType.ChoreStart:
                     return MessageSerializer.DeserializePayload<ChoreStartCommand>(payload);
                 case GameCommandType.ChoreEnd:
@@ -469,6 +471,9 @@ namespace Antigravity.Core.Commands
                         break;
                     case GameCommandType.SetBuildingEnabled:
                         ExecuteBuildingEnabledCommand(command as BuildingEnabledCommand);
+                        break;
+                    case GameCommandType.Ping:
+                        ExecutePingCommand(command as PingCommand);
                         break;
                         
                     // Duplicant sync commands
