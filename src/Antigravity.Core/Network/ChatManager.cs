@@ -71,14 +71,26 @@ namespace Antigravity.Core.Network
         /// </summary>
         public static void HandleChatMessage(ChatMessage msg, ulong senderId)
         {
-            // If host receives from client, broadcast to all
+            // Check if this message is from ourselves (avoid duplicate)
+            bool isFromSelf = false;
+            if (SteamManager.Initialized)
+            {
+                isFromSelf = senderId == Steamworks.SteamUser.GetSteamID().m_SteamID;
+            }
+            
+            // If host receives from client, broadcast to all (including sender)
             if (MultiplayerState.IsHost && msg.MessageType == ChatMessageType.Player)
             {
-                // Broadcast to other clients
+                // Broadcast to all clients
                 GameSession.SendToAllClients(MessageType.Chat, msg);
             }
             
-            AddLocalMessage(msg);
+            // Don't duplicate message if it's from ourselves
+            // (we already added it locally when we sent it)
+            if (!isFromSelf)
+            {
+                AddLocalMessage(msg);
+            }
         }
         
         private static void AddLocalMessage(ChatMessage msg)

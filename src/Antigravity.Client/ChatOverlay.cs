@@ -196,8 +196,15 @@ namespace Antigravity.Client
             _inputField.textComponent = inputText;
             _inputField.placeholder = phText;
             
-            // Track input focus
-            _inputField.onValueChanged.AddListener(_ => _isInputActive = true);
+            // Track input focus and block game input when typing
+            _inputField.onValueChanged.AddListener(_ => {
+                _isInputActive = true;
+                BlockGameInput(true);
+            });
+            _inputField.onEndEdit.AddListener(_ => {
+                // Input ended (blur or enter)
+                BlockGameInput(false);
+            });
             
             // Resize handle (bottom-right corner)
             _resizeHandle = new GameObject("ResizeHandle");
@@ -392,8 +399,34 @@ namespace Antigravity.Client
                 _inputField.text = "";
             }
             _isInputActive = false;
+            BlockGameInput(false);
             UnityEngine.EventSystems.EventSystem.current?.SetSelectedGameObject(null);
         }
+        
+        /// <summary>
+        /// Block or unblock game keyboard input while typing in chat.
+        /// </summary>
+        private void BlockGameInput(bool block)
+        {
+            try
+            {
+                // Use PlayerController.AllowKeyboard to control game input via reflection
+                if (PlayerController.Instance != null)
+                {
+                    // When block is true, disable keyboard; when false, enable it
+                    var prop = typeof(PlayerController).GetProperty("AllowKeyboard");
+                    if (prop != null)
+                    {
+                        prop.SetValue(PlayerController.Instance, !block);
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[Antigravity] BlockGameInput failed: {ex.Message}");
+            }
+        }
+
         
         private void OnNewMessage(ChatEntry entry)
         {
