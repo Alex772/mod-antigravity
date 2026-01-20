@@ -82,52 +82,10 @@ namespace Antigravity.Patches.Commands
             }
         }
     }
+    // NOTE: Speed control patches are implemented in SpeedSyncPatches.cs
+    // The SpeedControlPatches class was removed to avoid code duplication.
+    // See: src/Antigravity.Patches/Commands/SpeedSyncPatches.cs
 
-    /// <summary>
-    /// Patches for speed control synchronization.
-    /// </summary>
-    public static class SpeedControlPatches
-    {
-        public static class SpeedControlScreen_OnPause_Patch
-        {
-            public static void Postfix()
-            {
-                if (!MultiplayerState.IsMultiplayerSession) return;
-                if (CommandManager.IsExecutingRemoteCommand) return;
-
-                var cmd = new GameCommand(GameCommandType.PauseGame);
-                CommandManager.SendCommand(cmd);
-            }
-        }
-
-        public static class SpeedControlScreen_OnPlay_Patch
-        {
-            public static void Postfix()
-            {
-                if (!MultiplayerState.IsMultiplayerSession) return;
-                if (CommandManager.IsExecutingRemoteCommand) return;
-
-                var cmd = new GameCommand(GameCommandType.UnpauseGame);
-                CommandManager.SendCommand(cmd);
-            }
-        }
-
-        public static class SpeedControlScreen_OnSpeedChange_Patch
-        {
-            public static void Postfix(SpeedControlScreen __instance)
-            {
-                if (!MultiplayerState.IsMultiplayerSession) return;
-                if (CommandManager.IsExecutingRemoteCommand) return;
-
-                int speed = __instance.GetSpeed();
-                var cmd = new SpeedCommand
-                {
-                    Speed = speed
-                };
-                CommandManager.SendCommand(cmd);
-            }
-        }
-    }
 
     /// <summary>
     /// Patches for deconstruct tool.

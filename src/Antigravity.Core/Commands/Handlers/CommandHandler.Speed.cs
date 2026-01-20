@@ -3,71 +3,88 @@ using UnityEngine;
 namespace Antigravity.Core.Commands
 {
     /// <summary>
-    /// Partial class for Speed commands: SetGameSpeed, Pause, Unpause
+    /// Partial class for Speed commands: SetGameSpeed, PauseGame, UnpauseGame.
+    /// 
+    /// ONI Speed Values (used directly without conversion):
+    ///   0 = slow (1x) - SpeedControlScreen.normalSpeed
+    ///   1 = medium (2x) - SpeedControlScreen.fastSpeed
+    ///   2 = fast (3x) - SpeedControlScreen.ultraSpeed
     /// </summary>
     public static partial class CommandManager
     {
-        // Track current speed for pause/unpause (default 1)
-        private static int _currentSpeed = 1;
-        
-        private static void ExecuteSpeedCommand(SpeedCommand cmd)
-        {
-            if (cmd == null || SpeedControlScreen.Instance == null) return;
-
-            switch (cmd.Speed)
-            {
-                case 0:
-                    SpeedControlScreen.Instance.Pause(false);
-                    break;
-                case 1:
-                case 2:
-                case 3:
-                    // First unpause if paused, then set speed
-                    SpeedControlScreen.Instance.Unpause(false);
-                    SpeedControlScreen.Instance.SetSpeed(cmd.Speed);
-                    break;
-            }
-            Debug.Log($"[Antigravity] Executed speed change to {cmd.Speed}");
-        }
-        
+        /// <summary>
+        /// Execute a speed change command.
+        /// Receives ONI's native speed values (0, 1, 2) directly.
+        /// </summary>
         private static void ExecuteSetGameSpeedInline(SpeedCommand speedCmd)
         {
             if (speedCmd == null) return;
-            
-            // ONI speed values: 0=slow(1x), 1=medium(2x), 2=fast(3x)
-            // Our command uses 1=slow, 2=medium, 3=fast
-            // So we convert: our speed - 1 = ONI speed
-            int oniSpeed = speedCmd.Speed - 1;
-            if (oniSpeed >= 0 && oniSpeed <= 2)
+            if (SpeedControlScreen.Instance == null)
             {
-                _currentSpeed = oniSpeed;
-                Debug.Log($"[Antigravity] EXECUTE: Speed {speedCmd.Speed} -> ONI speed index {oniSpeed}");
-                
-                if (SpeedControlScreen.Instance != null)
-                {
-                    SpeedControlScreen.Instance.SetSpeed(oniSpeed);
-                }
+                Debug.LogWarning("[Antigravity] SpeedControlScreen.Instance is null, cannot set speed");
+                return;
             }
+            
+            int speed = speedCmd.Speed;
+            
+            // Validate speed is in valid range (0, 1, 2)
+            if (speed < 0 || speed > 2)
+            {
+                Debug.LogWarning($"[Antigravity] Invalid speed value: {speed}, clamping to valid range");
+                speed = Mathf.Clamp(speed, 0, 2);
+            }
+            
+            Debug.Log($"[Antigravity] EXECUTE: SetSpeed {speed}");
+            SpeedControlScreen.Instance.SetSpeed(speed);
         }
         
+        /// <summary>
+        /// Execute pause command.
+        /// Uses SpeedControlScreen.Pause with sound disabled.
+        /// Only pauses if not already paused to avoid pauseCount stack issues.
+        /// </summary>
         private static void ExecutePauseInline()
         {
-            Debug.Log($"[Antigravity] EXECUTE: Pause");
-            if (SpeedControlScreen.Instance != null)
+            if (SpeedControlScreen.Instance == null)
             {
-                // Save current speed before pausing
-                _currentSpeed = SpeedControlScreen.Instance.GetSpeed();
-                SpeedControlScreen.Instance.Pause(false); // false = no sound
+                Debug.LogWarning("[Antigravity] SpeedControlScreen.Instance is null, cannot pause");
+                return;
             }
+            
+            // Check if already paused to avoid stacking pauseCount
+            if (SpeedControlScreen.Instance.IsPaused)
+            {
+                Debug.Log("[Antigravity] EXECUTE: Pause (already paused, skipping)");
+                return;
+            }
+            
+            Debug.Log("[Antigravity] EXECUTE: Pause");
+            SpeedControlScreen.Instance.Pause(playSound: false);
         }
         
+        /// <summary>
+        /// Execute unpause command.
+        /// Uses SpeedControlScreen.Unpause with sound disabled.
+        /// Only unpauses if currently paused.
+        /// </summary>
         private static void ExecuteUnpauseInline()
         {
-            Debug.Log($"[Antigravity] EXECUTE: Unpause");
-            if (SpeedControlScreen.Instance != null)
+            if (SpeedControlScreen.Instance == null)
             {
-                SpeedControlScreen.Instance.Unpause(false); // false = no sound
+                Debug.LogWarning("[Antigravity] SpeedControlScreen.Instance is null, cannot unpause");
+                return;
             }
+            
+            // Check if actually paused
+            if (!SpeedControlScreen.Instance.IsPaused)
+            {
+                Debug.Log("[Antigravity] EXECUTE: Unpause (not paused, skipping)");
+                return;
+            }
+            
+            Debug.Log("[Antigravity] EXECUTE: Unpause");
+            SpeedControlScreen.Instance.Unpause(playSound: false);
         }
     }
 }
+

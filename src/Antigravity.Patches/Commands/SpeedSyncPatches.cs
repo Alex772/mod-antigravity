@@ -6,14 +6,21 @@ using Antigravity.Core.Network;
 namespace Antigravity.Patches.Commands
 {
     /// <summary>
-    /// Patches for Speed/Pause sync.
-    /// ONI uses: speed 0=slow(1x), 1=medium(2x), 2=fast(3x)
-    /// We send: speed 1=slow, 2=medium, 3=fast (adding 1 so 0 is never sent)
+    /// Patches for Speed/Pause synchronization.
+    /// 
+    /// ONI Speed Values:
+    ///   0 = slow (1x) - normalSpeed
+    ///   1 = medium (2x) - fastSpeed  
+    ///   2 = fast (3x) - ultraSpeed
+    /// 
+    /// We send these values directly without conversion.
+    /// Pause/Unpause are handled as separate commands.
     /// </summary>
     public static class SpeedSyncPatches
     {
         /// <summary>
-        /// Pause -> Send Pause command
+        /// Patch for SpeedControlScreen.Pause
+        /// Sends PauseGame command to all players.
         /// </summary>
         public static class SpeedControlScreen_Pause_Patch
         {
@@ -29,7 +36,8 @@ namespace Antigravity.Patches.Commands
         }
 
         /// <summary>
-        /// Unpause -> Send Unpause command
+        /// Patch for SpeedControlScreen.Unpause
+        /// Sends UnpauseGame command to all players.
         /// </summary>
         public static class SpeedControlScreen_Unpause_Patch
         {
@@ -45,8 +53,8 @@ namespace Antigravity.Patches.Commands
         }
 
         /// <summary>
-        /// SetSpeed -> Send Speed command
-        /// ONI speed 0,1,2 -> We send 1,2,3
+        /// Patch for SpeedControlScreen.SetSpeed
+        /// Sends speed command using ONI's native values (0, 1, 2).
         /// </summary>
         public static class SpeedControlScreen_SetSpeed_Patch
         {
@@ -56,13 +64,11 @@ namespace Antigravity.Patches.Commands
                 if (!MultiplayerState.IsGameLoaded) return;
                 if (CommandManager.IsExecutingRemoteCommand) return;
                 
-                // Speed is ONI's value (0, 1, 2)
-                // We add 1 to send (1, 2, 3) so 0 is never confused with pause
-                int speedToSend = Speed + 1;
-
-                Debug.Log($"[Antigravity] SEND: SetGameSpeed {speedToSend} (ONI speed index: {Speed})");
-                CommandManager.SendCommand(new SpeedCommand { Speed = speedToSend });
+                // Send ONI's native speed value directly (0, 1, 2)
+                Debug.Log($"[Antigravity] SEND: SetGameSpeed {Speed}");
+                CommandManager.SendCommand(new SpeedCommand { Speed = Speed });
             }
         }
     }
 }
+

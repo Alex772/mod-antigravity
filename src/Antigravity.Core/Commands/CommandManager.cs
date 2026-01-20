@@ -274,10 +274,12 @@ namespace Antigravity.Core.Commands
         {
             switch (type)
             {
+                // Speed commands - SetGameSpeed uses SpeedCommand, Pause/Unpause use simple GameCommand
                 case GameCommandType.SetGameSpeed:
+                    return MessageSerializer.DeserializePayload<SpeedCommand>(payload);
                 case GameCommandType.PauseGame:
                 case GameCommandType.UnpauseGame:
-                    return MessageSerializer.DeserializePayload<SpeedCommand>(payload);
+                    return MessageSerializer.DeserializePayload<GameCommand>(payload);
                 case GameCommandType.Dig:
                 case GameCommandType.CancelDig:
                     return MessageSerializer.DeserializePayload<DigCommand>(payload);

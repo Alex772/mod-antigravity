@@ -179,12 +179,18 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
-    /// Game speed command
+    /// Game speed command.
+    /// Uses ONI's native speed values: 0 = slow (1x), 1 = medium (2x), 2 = fast (3x).
+    /// Pause/Unpause are handled by separate PauseGame/UnpauseGame commands.
     /// </summary>
     [Serializable]
     public class SpeedCommand : GameCommand
     {
-        public int Speed { get; set; } // 0 = paused, 1 = normal, 2 = fast, 3 = super fast
+        /// <summary>
+        /// Speed index using ONI's native values:
+        /// 0 = slow (1x), 1 = medium (2x), 2 = fast (3x)
+        /// </summary>
+        public int Speed { get; set; }
 
         public SpeedCommand() : base(GameCommandType.SetGameSpeed) { }
     }
