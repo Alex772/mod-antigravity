@@ -1,0 +1,115 @@
+[h1]🚀 Antigravity - Multiplayer Mod[/h1]
+
+[b]Play Oxygen Not Included with your friends![/b]
+
+This mod adds multiplayer support using Steam P2P networking - no IP or port forwarding required!
+
+[h2]✨ Current Features (v0.0.33-alpha)[/h2]
+
+[h3]🔗 Connection[/h3]
+[list]
+[*] 🎮 [b]Multiplayer Menu[/b] - Button on main menu
+[*] 🔗 [b]Steam P2P[/b] - Connect via Steam (no IP needed!)
+[*] 📋 [b]Lobby System[/b] - Create/join lobbies with code
+[*] 📋 [b]Copy Code[/b] - One click to copy lobby code
+[*] 🚀 [b]Start Flow[/b] - Host selects new game or load save
+[*] ✅ [b]Ready Check[/b] - Game waits for all players to load before starting
+[/list]
+
+[h3]⚙️ Synchronized Actions[/h3]
+[list]
+[*] ⛏️ [b]Dig/Cancel Dig[/b] - Mining commands
+[*] 🏗️ [b]Build/Deconstruct[/b] - Building placement and removal
+[*] 🔧 [b]Utility Build[/b] - Wires, pipes, conveyors with proper connections
+[*] ✂️ [b]Disconnect Utility[/b] - Cut wires/pipes
+[*] ⏸️ [b]Game Speed[/b] - Pause/unpause/speed changes (fully synced!)
+[*] ⭐ [b]Priority[/b] - Tool and building priority
+[*] 🚿 [b]Mop/Sweep/Disinfect/Harvest[/b] - Area tools
+[*] 🐾 [b]Capture[/b] - Critter capture
+[/list]
+
+[h3]🏠 Building Settings Sync[/h3]
+[list]
+[*] 🚪 [b]Door State[/b] - Open/Lock/Auto
+[*] 📦 [b]Storage Filters[/b] - What items to store
+[*] 📦 [b]Storage Capacity[/b] - Slider setting
+[*] 🛏️ [b]Assignable[/b] - Bed/Toilet/Mess table assignments
+[*] ⚡ [b]Building Enable/Disable[/b] - On/Off checkbox
+[*] 🔬 [b]Filterable[/b] - Valve/Pump element filters
+[*] 📊 [b]Thresholds[/b] - Sensor values
+[*] 🔘 [b]Logic Switch[/b] - On/Off state
+[/list]
+
+[h3]🌍 World & Duplicant Sync[/h3]
+[list]
+[*] 💨 [b]Element Changes[/b] - Gas/liquid/solid modifications sync in real-time
+[*] 📦 [b]Item Sync[/b] - Pickupable items in world
+[*] 👤 [b]Duplicant Positions[/b] - Location updates every 2 seconds
+[*] 🎯 [b]Chore Sync[/b] - Task assignments synchronized
+[*] 📚 [b]Research Sync[/b] - Tech tree progress shared
+[*] ⭐ [b]Skills Sync[/b] - Skill points and masteries
+[*] 📅 [b]Schedule Sync[/b] - Duplicant schedules shared
+[/list]
+
+[h2]🎮 How to Use[/h2]
+
+[b]Host a Session:[/b]
+[olist]
+[*] Click "MULTIPLAYER" on main menu
+[*] Click "HOST GAME (Steam)"
+[*] Click "COPY CODE" and share with friend
+[*] Click "START GAME" when ready
+[*] Game auto-starts when all players finish loading!
+[/olist]
+
+[b]Join a Session:[/b]
+[olist]
+[*] Click "MULTIPLAYER" on main menu
+[*] Paste the lobby code
+[*] Click "JOIN GAME"
+[*] Wait for host to start - world will load automatically
+[/olist]
+
+[h2]🆕 What's New in v0.0.33[/h2]
+[list]
+[*] ✅ [b]Ready Check System[/b] - Host can't unpause until all players load
+[*] ✅ [b]Auto-Unpause[/b] - Game starts automatically when everyone is ready
+[*] 🔧 [b]Fixed[/b] - Pause/Unpause now syncs correctly
+[*] 🔧 [b]Fixed[/b] - ChoreStart errors resolved
+[*] 🔧 [b]Fixed[/b] - Duplicants now register properly on client
+[/list]
+
+[h2]⚠️ Alpha Version - Need Your Feedback![/h2]
+
+This is an early alpha! Many things may not work correctly.
+
+[b]Please report:[/b]
+[list]
+[*] Actions that don't sync between players
+[*] Desyncs or crashes
+[*] Features you want prioritized
+[/list]
+
+[h2]🐛 Known Issues[/h2]
+[list]
+[*] Duplicant animations may differ slightly between players
+[*] Some edge cases in building placement
+[*] Performance may vary with large colonies
+[/list]
+
+[h2]🔮 Coming Soon[/h2]
+[list]
+[*] Faster position sync (0.5s instead of 2s)
+[*] Animation state synchronization
+[*] Better desync detection and recovery
+[*] Multi-player cursor visibility
+[/list]
+
+[h2]🔗 Links[/h2]
+[url=https://github.com/Alex772/mod-antigravity]GitHub Repository[/url] - Report issues and contribute!
+
+[h2]💖 Support[/h2]
+If you enjoy this mod, please rate it and leave feedback!
+Your reports help make multiplayer ONI a reality.
+
+[i]Made with ❤️ for the ONI community[/i]

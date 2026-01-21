@@ -1,0 +1,39 @@
+[h1]🎉 v0.0.33 - Sync Fixes & Ready Check[/h1]
+
+[b]21 de Janeiro de 2026[/b]
+
+[h2]✨ Novidades[/h2]
+[list]
+[*] [b]Sistema de Ready Check[/b] - O jogo agora espera todos os jogadores carregarem antes de iniciar
+[*] [b]Auto-Unpause[/b] - Quando todos estão prontos, o jogo despausa automaticamente
+[*] [b]Script de Versão[/b] - Ferramenta para atualizar versão do mod facilmente
+[/list]
+
+[h2]🔧 Correções[/h2]
+[list]
+[*] [b]Pause/Unpause Sync[/b] - Agora funciona corretamente! Cliente recebe comando de despausar do host
+[*] [b]Erro ChoreStart[/b] - Corrigido erro silencioso ao sincronizar tarefas de duplicantes
+[*] [b]Registro de Duplicantes[/b] - Duplicantes agora são detectados corretamente no cliente
+[*] [b]Comandos Durante Pausa[/b] - Mensagens de rede são processadas mesmo com jogo pausado
+[/list]
+
+[h2]🛠️ Melhorias Técnicas[/h2]
+[list]
+[*] Null checks adicionados para evitar crashes
+[*] RefreshMinionList() para re-escanear duplicantes automaticamente
+[*] Melhor logging para diagnóstico de problemas
+[/list]
+
+[h2]📋 Como Testar[/h2]
+[olist]
+[*] Host cria lobby e inicia jogo
+[*] Cliente conecta - deve carregar mundo automaticamente
+[*] Host NÃO consegue despausar até cliente terminar de carregar
+[*] Quando pronto, jogo despausa sozinho!
+[/olist]
+
+[h2]🐛 Reportar Bugs[/h2]
+Encontrou problema? Reporte no GitHub: [url=https://github.com/Alex772/mod-antigravity/issues]Issues[/url]
+
+---
+[i]Obrigado por testar o Antigravity! Seu feedback é essencial.[/i]
