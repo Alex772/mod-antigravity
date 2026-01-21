@@ -38,9 +38,28 @@ namespace Antigravity.Patches.Commands
         /// <summary>
         /// Patch for SpeedControlScreen.Unpause
         /// Sends UnpauseGame command to all players.
+        /// BLOCKS unpause if host is waiting for players to load.
         /// </summary>
         public static class SpeedControlScreen_Unpause_Patch
         {
+            /// <summary>
+            /// Prefix: Block unpause if host is waiting for players to load.
+            /// </summary>
+            public static bool Prefix()
+            {
+                if (!MultiplayerState.IsMultiplayerSession) return true;
+                if (!MultiplayerState.IsHost) return true;
+                
+                // Block unpause if waiting for players
+                if (GameSession.IsWaitingForPlayers)
+                {
+                    Debug.LogWarning("[Antigravity] BLOCKED: Cannot unpause while waiting for players to load!");
+                    return false; // Block the original method
+                }
+                
+                return true; // Allow original method to run
+            }
+            
             public static void Postfix()
             {
                 if (!MultiplayerState.IsMultiplayerSession) return;

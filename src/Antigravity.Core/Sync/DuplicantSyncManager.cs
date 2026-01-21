@@ -75,13 +75,51 @@ namespace Antigravity.Core.Sync
             return null;
         }
 
+        /// <summary>
+        /// Re-scan and register all minions in the game.
+        /// Used when a minion is not found in the tracked list.
+        /// </summary>
+        public void RefreshMinionList()
+        {
+            if (Components.LiveMinionIdentities == null || Components.LiveMinionIdentities.Items == null)
+            {
+                Debug.LogWarning("[Antigravity] RefreshMinionList: Components.LiveMinionIdentities not available");
+                return;
+            }
+            
+            int countBefore = _trackedMinions.Count;
+            
+            foreach (var minion in Components.LiveMinionIdentities.Items)
+            {
+                if (minion != null)
+                {
+                    string key = GetDuplicantKey(minion);
+                    if (!string.IsNullOrEmpty(key) && !_trackedMinions.ContainsKey(key))
+                    {
+                        _trackedMinions[key] = minion;
+                        Debug.Log($"[Antigravity] RefreshMinionList: Registered {key}");
+                    }
+                }
+            }
+            
+            Debug.Log($"[Antigravity] RefreshMinionList: {countBefore} -> {_trackedMinions.Count} minions tracked");
+        }
+
         public void HandleChoreStart(ChoreStartCommand cmd)
         {
             MinionIdentity minion = GetMinion(cmd.DuplicantName);
             if (minion == null)
             {
-                Debug.LogWarning($"[Antigravity] ChoreStart: Minion {cmd.DuplicantName} not found!");
-                return;
+                // Try to refresh minion list and find again
+                Debug.LogWarning($"[Antigravity] ChoreStart: Minion {cmd.DuplicantName} not found, attempting refresh...");
+                RefreshMinionList();
+                minion = GetMinion(cmd.DuplicantName);
+                
+                if (minion == null)
+                {
+                    Debug.LogWarning($"[Antigravity] ChoreStart: Minion {cmd.DuplicantName} still not found after refresh!");
+                    return;
+                }
             }
 
             // On client, we need to force the chore that the host assigned

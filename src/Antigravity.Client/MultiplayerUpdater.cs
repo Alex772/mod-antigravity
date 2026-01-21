@@ -56,6 +56,7 @@ namespace Antigravity.Client
             GameSession.OnGameStarting += OnGameStarting;
             GameSession.OnWorldDataReceived += OnWorldDataReceived;
             GameSession.OnGameStarted += OnGameStarted;
+            GameSession.OnAllPlayersReady += OnAllPlayersReady;
 
             // Initialize command manager for syncing commands
             CommandManager.Initialize();
@@ -68,6 +69,7 @@ namespace Antigravity.Client
             GameSession.OnGameStarting -= OnGameStarting;
             GameSession.OnWorldDataReceived -= OnWorldDataReceived;
             GameSession.OnGameStarted -= OnGameStarted;
+            GameSession.OnAllPlayersReady -= OnAllPlayersReady;
         }
 
         // Checksum sync timer (Host only, every 5 seconds)
@@ -84,62 +86,69 @@ namespace Antigravity.Client
 
         private void Update()
         {
-            // Poll for network messages (Steam mode)
+            // CRITICAL: Always poll network messages, even when paused
+            // This ensures pause/unpause commands are received
             if (SteamNetworkManager.IsConnected)
             {
                 SteamNetworkManager.Update();
             }
             
-            // Poll for network messages (Local mode - LiteNetLib)
             if (NetworkBackendManager.IsLocalMode && NetworkBackendManager.IsConnected)
             {
                 NetworkBackendManager.Update();
             }
 
-            // Process any pending commands from other players
-            // In local mode (terminal client testing), always process commands
-            bool shouldProcessCommands = (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded)
-                || (NetworkBackendManager.IsLocalMode && NetworkBackendManager.IsConnected);
+            // CRITICAL: Always process commands when connected
+            // Pause/Unpause commands MUST be processed even when paused
+            bool isConnected = SteamNetworkManager.IsConnected || 
+                (NetworkBackendManager.IsLocalMode && NetworkBackendManager.IsConnected);
             
-            if (shouldProcessCommands)
+            if (isConnected)
             {
                 CommandManager.ProcessPendingCommands();
+            }
 
-                // Host sync logic
-                if (MultiplayerState.IsHost)
+            // Host sync logic - only when game is loaded and NOT paused
+            bool canRunHostSync = MultiplayerState.IsMultiplayerSession && 
+                                  MultiplayerState.IsGameLoaded && 
+                                  MultiplayerState.IsHost &&
+                                  SpeedControlScreen.Instance != null &&
+                                  !SpeedControlScreen.Instance.IsPaused;
+            
+            if (canRunHostSync)
+            {
+                // Position sync (every 2 seconds)
+                _positionSyncTimer += Time.deltaTime;
+                if (_positionSyncTimer >= POSITION_SYNC_INTERVAL)
                 {
-                    // Position sync (every 2 seconds)
-                    _positionSyncTimer += Time.deltaTime;
-                    if (_positionSyncTimer >= POSITION_SYNC_INTERVAL)
-                    {
-                        _positionSyncTimer = 0f;
-                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendPositionSync();
-                    }
+                    _positionSyncTimer = 0f;
+                    Antigravity.Core.Sync.DuplicantSyncManager.Instance?.SendPositionSync();
+                }
 
-                    // Checksum sync (every 5 seconds)
-                    _checksumTimer += Time.deltaTime;
-                    if (_checksumTimer >= CHECKSUM_INTERVAL)
-                    {
-                        _checksumTimer = 0f;
-                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendMinionChecksums();
-                    }
-                    
-                    // Item sync (every 10 seconds)
-                    _itemSyncTimer += Time.deltaTime;
-                    if (_itemSyncTimer >= ITEM_SYNC_INTERVAL)
-                    {
-                        _itemSyncTimer = 0f;
-                        Antigravity.Core.Sync.DuplicantSyncManager.Instance.SendItemSync();
-                    }
-                    
-                    // Element sync (continuous delta broadcast)
-                    Antigravity.Core.Sync.ElementSyncManager.Instance.Update();
-                }
-                else
+                // Checksum sync (every 5 seconds)
+                _checksumTimer += Time.deltaTime;
+                if (_checksumTimer >= CHECKSUM_INTERVAL)
                 {
-                    // Client: Process any pending chores that couldn't be assigned immediately
-                    Antigravity.Core.Sync.DuplicantSyncManager.Instance.ProcessPendingChores();
+                    _checksumTimer = 0f;
+                    Antigravity.Core.Sync.DuplicantSyncManager.Instance?.SendMinionChecksums();
                 }
+                
+                // Item sync (every 10 seconds)
+                _itemSyncTimer += Time.deltaTime;
+                if (_itemSyncTimer >= ITEM_SYNC_INTERVAL)
+                {
+                    _itemSyncTimer = 0f;
+                    Antigravity.Core.Sync.DuplicantSyncManager.Instance?.SendItemSync();
+                }
+                
+                // Element sync (continuous delta broadcast)
+                Antigravity.Core.Sync.ElementSyncManager.Instance?.Update();
+            }
+            
+            // Client: Process pending chores when game is loaded (even if paused - to prepare for unpause)
+            if (MultiplayerState.IsMultiplayerSession && MultiplayerState.IsGameLoaded && !MultiplayerState.IsHost)
+            {
+                Antigravity.Core.Sync.DuplicantSyncManager.Instance?.ProcessPendingChores();
             }
         }
 
@@ -299,6 +308,32 @@ namespace Antigravity.Client
             {
                 // If client, notify host that we're ready
                 GameSession.ClientReady();
+            }
+        }
+
+        /// <summary>
+        /// Called when all players have finished loading (Host only).
+        /// Automatically unpauses the game.
+        /// </summary>
+        private void OnAllPlayersReady()
+        {
+            if (!SteamNetworkManager.IsHost) return;
+            
+            Debug.Log("[Antigravity] All players ready! Auto-unpausing game...");
+            
+            // Small delay to ensure everything is synced, then unpause
+            StartCoroutine(DelayedUnpause());
+        }
+        
+        private System.Collections.IEnumerator DelayedUnpause()
+        {
+            // Wait a short moment for any pending syncs
+            yield return new WaitForSeconds(0.5f);
+            
+            if (SpeedControlScreen.Instance != null && SpeedControlScreen.Instance.IsPaused)
+            {
+                Debug.Log("[Antigravity] Unpausing game after all players ready...");
+                SpeedControlScreen.Instance.Unpause(playSound: true);
             }
         }
 
