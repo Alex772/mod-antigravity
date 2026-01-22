@@ -1,35 +1,41 @@
-[h1]🎉 v0.0.33 - Sync Fixes & Ready Check[/h1]
+[h1]🎉 v0.0.34 - Speed Sync Melhorado + Position Sync Rápido[/h1]
 
-[b]21 de Janeiro de 2026[/b]
+[b]22 de Janeiro de 2026[/b]
 
-[h2]✨ Novidades[/h2]
+[h2]✨ Melhorias[/h2]
 [list]
-[*] [b]Sistema de Ready Check[/b] - O jogo agora espera todos os jogadores carregarem antes de iniciar
-[*] [b]Auto-Unpause[/b] - Quando todos estão prontos, o jogo despausa automaticamente
-[*] [b]Script de Versão[/b] - Ferramenta para atualizar versão do mod facilmente
+[*] [b]Sincronização de Velocidade Reescrita[/b] - Agora usa sync baseado em estado
+  [list]
+  [*] Envia estado completo (pausado + velocidade) ao invés de ações separadas
+  [*] Evita problemas de desync do contador de pause
+  [*] Usa acesso direto às variáveis internas do jogo
+  [/list]
+[*] [b]Position Sync 4x Mais Rápido[/b] - Movimento de duplicantes mais suave
+  [list]
+  [*] Antes: Atualização a cada 2 segundos
+  [*] Agora: Atualização a cada 0.5 segundos
+  [/list]
+[*] [b]Pause/Velocidade Funciona Bidirecionalmente[/b]
+  [list]
+  [*] Host pode pausar/mudar velocidade → Clientes sincronizam
+  [*] Clientes podem pausar/mudar velocidade → Host e outros sincronizam
+  [/list]
 [/list]
 
-[h2]🔧 Correções[/h2]
+[h2]� Correções Técnicas[/h2]
 [list]
-[*] [b]Pause/Unpause Sync[/b] - Agora funciona corretamente! Cliente recebe comando de despausar do host
-[*] [b]Erro ChoreStart[/b] - Corrigido erro silencioso ao sincronizar tarefas de duplicantes
-[*] [b]Registro de Duplicantes[/b] - Duplicantes agora são detectados corretamente no cliente
-[*] [b]Comandos Durante Pausa[/b] - Mensagens de rede são processadas mesmo com jogo pausado
-[/list]
-
-[h2]🛠️ Melhorias Técnicas[/h2]
-[list]
-[*] Null checks adicionados para evitar crashes
-[*] RefreshMinionList() para re-escanear duplicantes automaticamente
-[*] Melhor logging para diagnóstico de problemas
+[*] [b]pauseCount Stack Fix[/b] - Corrigido problema onde múltiplos pause/unpause causavam desync
+[*] [b]Time.timeScale Sync[/b] - Agora seta diretamente o timeScale para garantir sincronização
+[*] [b]Reflection Access[/b] - Acessa campos privados para controle preciso
 [/list]
 
 [h2]📋 Como Testar[/h2]
 [olist]
-[*] Host cria lobby e inicia jogo
-[*] Cliente conecta - deve carregar mundo automaticamente
-[*] Host NÃO consegue despausar até cliente terminar de carregar
-[*] Quando pronto, jogo despausa sozinho!
+[*] Host e Cliente conectados
+[*] Host pausa o jogo → Cliente deve pausar também
+[*] Cliente pausa o jogo → Host deve pausar também
+[*] Qualquer jogador muda velocidade → Todos sincronizam
+[*] Observe duplicantes - movimento deve parecer mais suave
 [/olist]
 
 [h2]🐛 Reportar Bugs[/h2]

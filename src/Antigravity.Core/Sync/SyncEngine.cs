@@ -95,8 +95,8 @@ namespace Antigravity.Core.Sync
             // Update partial sync manager (periodic verification)
             PartialSyncManager.Update();
             
-            // HOST: Periodic position sync every ~2 seconds (120 ticks at 60 FPS)
-            if (Network.MultiplayerState.IsHost && CurrentTick % 120 == 0)
+            // HOST: Periodic position sync every ~0.5 seconds (30 ticks at 60 FPS)
+            if (Network.MultiplayerState.IsHost && CurrentTick % 30 == 0)
             {
                 DuplicantSyncManager.Instance?.SendPositionSync();
             }

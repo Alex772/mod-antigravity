@@ -76,9 +76,9 @@ namespace Antigravity.Client
         private float _checksumTimer = 0f;
         private const float CHECKSUM_INTERVAL = 5f;
 
-        // Position sync timer (Host only, every 2 seconds)
+        // Position sync timer (Host only, every 0.5 seconds)
         private float _positionSyncTimer = 0f;
-        private const float POSITION_SYNC_INTERVAL = 2f;
+        private const float POSITION_SYNC_INTERVAL = 0.5f;
         
         // Item sync timer (Host only, every 10 seconds)
         private float _itemSyncTimer = 0f;
