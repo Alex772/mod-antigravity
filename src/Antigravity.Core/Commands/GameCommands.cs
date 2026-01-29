@@ -179,9 +179,9 @@ namespace Antigravity.Core.Commands
     }
 
     /// <summary>
-    /// Game speed command with pause state.
+    /// Game speed command.
     /// Uses ONI's native speed values: 0 = slow (1x), 1 = medium (2x), 2 = fast (3x).
-    /// Includes pause state for complete state synchronization.
+    /// Pause/Unpause are handled by separate PauseGame/UnpauseGame commands.
     /// </summary>
     [Serializable]
     public class SpeedCommand : GameCommand
@@ -191,11 +191,6 @@ namespace Antigravity.Core.Commands
         /// 0 = slow (1x), 1 = medium (2x), 2 = fast (3x)
         /// </summary>
         public int Speed { get; set; }
-        
-        /// <summary>
-        /// Whether the game is paused.
-        /// </summary>
-        public bool IsPaused { get; set; }
 
         public SpeedCommand() : base(GameCommandType.SetGameSpeed) { }
     }

@@ -4,7 +4,7 @@
 
 This mod adds multiplayer support using Steam P2P networking - no IP or port forwarding required!
 
-[h2]✨ Current Features (v0.0.33-alpha)[/h2]
+[h2]✨ Current Features (v0.0.35-alpha)[/h2]
 
 [h3]🔗 Connection[/h3]
 [list]
@@ -44,7 +44,7 @@ This mod adds multiplayer support using Steam P2P networking - no IP or port for
 [list]
 [*] 💨 [b]Element Changes[/b] - Gas/liquid/solid modifications sync in real-time
 [*] 📦 [b]Item Sync[/b] - Pickupable items in world
-[*] 👤 [b]Duplicant Positions[/b] - Location updates every 2 seconds
+[*] 👤 [b]Duplicant Positions[/b] - Location updates every 0.5 seconds
 [*] 🎯 [b]Chore Sync[/b] - Task assignments synchronized
 [*] 📚 [b]Research Sync[/b] - Tech tree progress shared
 [*] ⭐ [b]Skills Sync[/b] - Skill points and masteries
@@ -70,13 +70,11 @@ This mod adds multiplayer support using Steam P2P networking - no IP or port for
 [*] Wait for host to start - world will load automatically
 [/olist]
 
-[h2]🆕 What's New in v0.0.33[/h2]
+[h2]🆕 What's New in v0.0.35[/h2]
 [list]
-[*] ✅ [b]Ready Check System[/b] - Host can't unpause until all players load
-[*] ✅ [b]Auto-Unpause[/b] - Game starts automatically when everyone is ready
-[*] 🔧 [b]Fixed[/b] - Pause/Unpause now syncs correctly
-[*] 🔧 [b]Fixed[/b] - ChoreStart errors resolved
-[*] 🔧 [b]Fixed[/b] - Duplicants now register properly on client
+[*] 🔧 [b]Fixed Ready Check Bug[/b] - Unpause command no longer sent when blocked
+[*] 🔧 [b]Multi-Client Sync Improved[/b] - Better handling of simultaneous actions
+[*] ⚡ [b]Position Sync 4x Faster[/b] - Now updates every 0.5 seconds
 [/list]
 
 [h2]⚠️ Alpha Version - Need Your Feedback![/h2]
@@ -95,14 +93,6 @@ This is an early alpha! Many things may not work correctly.
 [*] Duplicant animations may differ slightly between players
 [*] Some edge cases in building placement
 [*] Performance may vary with large colonies
-[/list]
-
-[h2]🔮 Coming Soon[/h2]
-[list]
-[*] Faster position sync (0.5s instead of 2s)
-[*] Animation state synchronization
-[*] Better desync detection and recovery
-[*] Multi-player cursor visibility
 [/list]
 
 [h2]🔗 Links[/h2]

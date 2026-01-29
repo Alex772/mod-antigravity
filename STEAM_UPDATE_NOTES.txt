@@ -1,42 +1,38 @@
-[h1]🎉 v0.0.34 - Speed Sync Melhorado + Position Sync Rápido[/h1]
+[h1]🎉 v0.0.35 - Correção de Sync Multi-Cliente[/h1]
 
-[b]22 de Janeiro de 2026[/b]
+[b]28 de Janeiro de 2026[/b]
 
-[h2]✨ Melhorias[/h2]
+[h2]🔧 Correções[/h2]
 [list]
-[*] [b]Sincronização de Velocidade Reescrita[/b] - Agora usa sync baseado em estado
+[*] [b]Bug do Ready Check Corrigido[/b]
   [list]
-  [*] Envia estado completo (pausado + velocidade) ao invés de ações separadas
-  [*] Evita problemas de desync do contador de pause
-  [*] Usa acesso direto às variáveis internas do jogo
+  [*] Comando de Unpause não é mais enviado quando Ready Check bloqueia
+  [*] Adicionada flag _prefixBlocked para controle preciso
   [/list]
-[*] [b]Position Sync 4x Mais Rápido[/b] - Movimento de duplicantes mais suave
+[*] [b]Sync Multi-Cliente Melhorado[/b]
+  [list]
+  [*] Ações simultâneas de múltiplos clientes agora são tratadas corretamente
+  [*] Comandos duplicados são ignorados automaticamente
+  [/list]
+[/list]
+
+[h2]⚡ Melhorias de Performance[/h2]
+[list]
+[*] [b]Position Sync 4x Mais Rápido[/b]
   [list]
   [*] Antes: Atualização a cada 2 segundos
   [*] Agora: Atualização a cada 0.5 segundos
-  [/list]
-[*] [b]Pause/Velocidade Funciona Bidirecionalmente[/b]
-  [list]
-  [*] Host pode pausar/mudar velocidade → Clientes sincronizam
-  [*] Clientes podem pausar/mudar velocidade → Host e outros sincronizam
+  [*] Movimento de duplicantes muito mais suave!
   [/list]
 [/list]
 
-[h2]� Correções Técnicas[/h2]
+[h2]📋 Edge Cases Testados[/h2]
 [list]
-[*] [b]pauseCount Stack Fix[/b] - Corrigido problema onde múltiplos pause/unpause causavam desync
-[*] [b]Time.timeScale Sync[/b] - Agora seta diretamente o timeScale para garantir sincronização
-[*] [b]Reflection Access[/b] - Acessa campos privados para controle preciso
+[*] ✅ 2+ clientes pausam simultaneamente - OK
+[*] ✅ 2+ clientes despausam simultaneamente - OK
+[*] ✅ Ready Check bloqueia Unpause - OK
+[*] ✅ Pause + Unpause quase simultâneo - OK
 [/list]
-
-[h2]📋 Como Testar[/h2]
-[olist]
-[*] Host e Cliente conectados
-[*] Host pausa o jogo → Cliente deve pausar também
-[*] Cliente pausa o jogo → Host deve pausar também
-[*] Qualquer jogador muda velocidade → Todos sincronizam
-[*] Observe duplicantes - movimento deve parecer mais suave
-[/olist]
 
 [h2]🐛 Reportar Bugs[/h2]
 Encontrou problema? Reporte no GitHub: [url=https://github.com/Alex772/mod-antigravity/issues]Issues[/url]
