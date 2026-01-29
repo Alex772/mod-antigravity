@@ -316,8 +316,9 @@ namespace Antigravity.Core.Sync
 
         private static void ApplyBuildingsData(string json)
         {
-            // TODO: Implement buildings resync
-            Debug.Log($"[Antigravity] Buildings resync data received (not yet applied - {json.Length} bytes)");
+            // Use WorldStateHasher implementation
+            byte[] data = Encoding.UTF8.GetBytes(json);
+            WorldStateHasher.ApplyBuildingsData(data);
         }
 
         #endregion

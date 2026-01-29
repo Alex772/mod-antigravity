@@ -1,37 +1,42 @@
-[h1]🎉 v0.0.35 - Correção de Sync Multi-Cliente[/h1]
+[h1]🎉 v0.0.36 - Resync & Late Join[/h1]
 
 [b]28 de Janeiro de 2026[/b]
 
-[h2]🔧 Correções[/h2]
+[h2]🆕 Novas Funcionalidades[/h2]
 [list]
-[*] [b]Bug do Ready Check Corrigido[/b]
+[*] [b]Late Join (Entrada Tardia)[/b]
   [list]
-  [*] Comando de Unpause não é mais enviado quando Ready Check bloqueia
-  [*] Adicionada flag _prefixBlocked para controle preciso
+  [*] Jogadores podem entrar durante a partida!
+  [*] Jogo pausa automaticamente para todos
+  [*] Novo jogador recebe o save atual
+  [*] Jogo continua quando todos estiverem prontos
   [/list]
-[*] [b]Sync Multi-Cliente Melhorado[/b]
+[*] [b]Hard Sync Periódico[/b]
   [list]
-  [*] Ações simultâneas de múltiplos clientes agora são tratadas corretamente
-  [*] Comandos duplicados são ignorados automaticamente
+  [*] A cada dia de jogo, host envia save completo
+  [*] Garante que todos fiquem 100% sincronizados
+  [*] Previne drift de longo prazo
+  [/list]
+[*] [b]Building Resync[/b]
+  [list]
+  [*] Sistema detecta diferenças de buildings entre host/cliente
+  [*] Corrige automaticamente: cria faltantes, remove extras
+  [*] Sincroniza estados: portas, enable/disable, deconstruct
   [/list]
 [/list]
 
-[h2]⚡ Melhorias de Performance[/h2]
+[h2]🔧 Melhorias[/h2]
 [list]
-[*] [b]Position Sync 4x Mais Rápido[/b]
-  [list]
-  [*] Antes: Atualização a cada 2 segundos
-  [*] Agora: Atualização a cada 0.5 segundos
-  [*] Movimento de duplicantes muito mais suave!
-  [/list]
+[*] [b]Host Disconnect[/b] - Clientes voltam ao menu automaticamente
+[*] [b]Lobby Cleanup[/b] - Lobby é fechado quando host sai
+[*] [b]Sync Check a cada 60s[/b] - Verificação periódica de checksums
 [/list]
 
-[h2]📋 Edge Cases Testados[/h2]
+[h2]📋 Sistema de Sync Completo[/h2]
 [list]
-[*] ✅ 2+ clientes pausam simultaneamente - OK
-[*] ✅ 2+ clientes despausam simultaneamente - OK
-[*] ✅ Ready Check bloqueia Unpause - OK
-[*] ✅ Pause + Unpause quase simultâneo - OK
+[*] ✅ Position Sync - 0.5 segundos
+[*] ✅ Partial Sync (checksums) - 60 segundos
+[*] ✅ Hard Sync (save/reload) - 1 dia de jogo
 [/list]
 
 [h2]🐛 Reportar Bugs[/h2]

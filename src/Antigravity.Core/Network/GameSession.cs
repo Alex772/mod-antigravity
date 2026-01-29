@@ -42,6 +42,7 @@ namespace Antigravity.Core.Network
         {
             SteamNetworkManager.OnDataReceived += OnNetworkDataReceived;
             SteamNetworkManager.OnPlayerLeft += OnPlayerDisconnected;
+            SteamNetworkManager.OnPlayerJoined += OnPlayerJoined;
             
             // Subscribe to heartbeat disconnect events
             HeartbeatManager.OnHostDisconnected += OnHostConnectionLost;
@@ -57,6 +58,7 @@ namespace Antigravity.Core.Network
         {
             SteamNetworkManager.OnDataReceived -= OnNetworkDataReceived;
             SteamNetworkManager.OnPlayerLeft -= OnPlayerDisconnected;
+            SteamNetworkManager.OnPlayerJoined -= OnPlayerJoined;
             HeartbeatManager.OnHostDisconnected -= OnHostConnectionLost;
             HeartbeatManager.OnClientDisconnected -= HandlePlayerDisconnected;
             HeartbeatManager.Stop();
@@ -436,6 +438,15 @@ namespace Antigravity.Core.Network
             HandlePlayerDisconnected(player.m_SteamID);
         }
         
+        private static void OnPlayerJoined(CSteamID player)
+        {
+            // If game is in progress, handle late join
+            if (IsInGame && SteamNetworkManager.IsHost)
+            {
+                HandleLateJoin(player);
+            }
+        }
+        
         /// <summary>
         /// Handle player disconnect by Steam ID.
         /// </summary>
@@ -456,6 +467,7 @@ namespace Antigravity.Core.Network
             Debug.Log($"[Antigravity] Player disconnected: {playerName} ({playerId})");
         }
         
+
         /// <summary>
         /// Called when host disconnect is detected.
         /// Returns client to main menu.
@@ -479,6 +491,100 @@ namespace Antigravity.Core.Network
             catch (System.Exception ex)
             {
                 Debug.LogError($"[Antigravity] Failed to return to menu: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// [HOST] Handle a player joining mid-game (late join).
+        /// Pauses the game, saves current state, and sends to new player.
+        /// </summary>
+        public static void HandleLateJoin(CSteamID newPlayer)
+        {
+            if (!SteamNetworkManager.IsHost) return;
+            if (!IsInGame) return; // Only handle if game already started
+            
+            Debug.Log($"[Antigravity] Late join detected: {SteamNetworkManager.GetPlayerName(newPlayer)}");
+            
+            // 1. Pause the game for everyone
+            IsWaitingForPlayers = true;
+            _playerReadyStatus[newPlayer.m_SteamID] = false;
+            
+            if (SpeedControlScreen.Instance != null)
+            {
+                SpeedControlScreen.Instance.Pause(playSound: false);
+            }
+            
+            // Notify all players
+            ChatManager.SendSystemMessage($"{SteamNetworkManager.GetPlayerName(newPlayer)} is joining... Game paused.");
+            
+            // 2. Save current game state
+            try
+            {
+                // Get current colony name
+                string colonyName = SaveGame.Instance?.BaseName ?? "Colony";
+                
+                // Save current game - returns the save file path
+                string savePath = SaveLoader.Instance?.Save(colonyName, isAutoSave: false, updateSavePointer: false);
+                
+                if (!string.IsNullOrEmpty(savePath) && System.IO.File.Exists(savePath))
+                {
+                    // Read the save file bytes
+                    byte[] saveData = System.IO.File.ReadAllBytes(savePath);
+                    Debug.Log($"[Antigravity] Late join save data: {saveData.Length} bytes");
+                    
+                    // 3. Compress and send to new player
+                    byte[] compressedData = MessageSerializer.Compress(saveData);
+                    
+                    var startingMsg = new GameStartingMessage
+                    {
+                        IsLoadingSave = true,
+                        ColonyName = colonyName,
+                        TotalDataSize = compressedData.Length,
+                        ChunkCount = CalculateChunkCount(compressedData.Length)
+                    };
+                    
+                    // Send only to the new player
+                    SendToClient(newPlayer.m_SteamID, MessageType.GameStarting, startingMsg);
+                    
+                    // Send world data chunks to new player
+                    SendWorldDataChunksToPlayer(newPlayer.m_SteamID, compressedData);
+                    
+                    Debug.Log($"[Antigravity] Sent current game state to late joiner");
+                }
+                else
+                {
+                    Debug.LogError("[Antigravity] Failed to save current game state for late join");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Antigravity] Late join save failed: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Send world data chunks to a specific player.
+        /// </summary>
+        private static void SendWorldDataChunksToPlayer(ulong playerId, byte[] compressedData)
+        {
+            const int CHUNK_SIZE = 64 * 1024; // 64KB
+            int chunkCount = CalculateChunkCount(compressedData.Length);
+            
+            for (int i = 0; i < chunkCount; i++)
+            {
+                int offset = i * CHUNK_SIZE;
+                int length = Math.Min(CHUNK_SIZE, compressedData.Length - offset);
+                byte[] chunkData = new byte[length];
+                Buffer.BlockCopy(compressedData, offset, chunkData, 0, length);
+                
+                var chunk = new WorldDataChunk
+                {
+                    ChunkIndex = i,
+                    TotalChunks = chunkCount,
+                    Data = chunkData
+                };
+                
+                SendToClient(playerId, MessageType.WorldDataChunk, chunk);
             }
         }
 

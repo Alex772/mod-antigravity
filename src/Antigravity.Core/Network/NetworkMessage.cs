@@ -125,6 +125,12 @@ namespace Antigravity.Core.Network
         /// Number of chunks the data will be sent in.
         /// </summary>
         public int ChunkCount { get; set; }
+        
+        /// <summary>
+        /// True if this is a periodic hard sync (not initial game start).
+        /// Clients should reload world without returning to menu.
+        /// </summary>
+        public bool IsHardSync { get; set; }
     }
 
     /// <summary>

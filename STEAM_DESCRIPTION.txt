@@ -4,7 +4,7 @@
 
 This mod adds multiplayer support using Steam P2P networking - no IP or port forwarding required!
 
-[h2]✨ Current Features (v0.0.35-alpha)[/h2]
+[h2]✨ Current Features (v0.0.36-alpha)[/h2]
 
 [h3]🔗 Connection[/h3]
 [list]
@@ -14,6 +14,7 @@ This mod adds multiplayer support using Steam P2P networking - no IP or port for
 [*] 📋 [b]Copy Code[/b] - One click to copy lobby code
 [*] 🚀 [b]Start Flow[/b] - Host selects new game or load save
 [*] ✅ [b]Ready Check[/b] - Game waits for all players to load before starting
+[*] 🔄 [b]Late Join[/b] - Join mid-game! Game pauses and syncs current state
 [/list]
 
 [h3]⚙️ Synchronized Actions[/h3]
@@ -51,6 +52,14 @@ This mod adds multiplayer support using Steam P2P networking - no IP or port for
 [*] 📅 [b]Schedule Sync[/b] - Duplicant schedules shared
 [/list]
 
+[h3]🔄 Resync System (NEW!)[/h3]
+[list]
+[*] 🔍 [b]Periodic Sync Check[/b] - Host verifies sync every 60 seconds
+[*] 🏗️ [b]Building Resync[/b] - Auto-corrects building differences
+[*] 💾 [b]Hard Sync[/b] - Full game state resync every game day
+[*] 🔌 [b]Host Disconnect[/b] - Clients return to menu automatically
+[/list]
+
 [h2]🎮 How to Use[/h2]
 
 [b]Host a Session:[/b]
@@ -70,11 +79,12 @@ This mod adds multiplayer support using Steam P2P networking - no IP or port for
 [*] Wait for host to start - world will load automatically
 [/olist]
 
-[h2]🆕 What's New in v0.0.35[/h2]
+[h2]🆕 What's New in v0.0.36[/h2]
 [list]
-[*] 🔧 [b]Fixed Ready Check Bug[/b] - Unpause command no longer sent when blocked
-[*] 🔧 [b]Multi-Client Sync Improved[/b] - Better handling of simultaneous actions
-[*] ⚡ [b]Position Sync 4x Faster[/b] - Now updates every 0.5 seconds
+[*] 🔄 [b]Late Join Support[/b] - Join mid-game! Game pauses and syncs current state
+[*] 💾 [b]Hard Sync[/b] - Periodic full resync every game day to prevent drift
+[*] 🏗️ [b]Building Resync[/b] - Auto-corrects building mismatches
+[*] 🔌 [b]Host Disconnect Handling[/b] - Clients return to menu cleanly
 [/list]
 
 [h2]⚠️ Alpha Version - Need Your Feedback![/h2]

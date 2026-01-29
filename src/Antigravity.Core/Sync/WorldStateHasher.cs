@@ -335,23 +335,20 @@ namespace Antigravity.Core.Sync
 
             try
             {
-                var buildings = Components.BuildingCompletes.Items;
-                if (buildings == null) return Array.Empty<byte>();
-
-                foreach (var building in buildings)
+                // Sync completed buildings only
+                var completeBuildings = Components.BuildingCompletes.Items;
+                if (completeBuildings != null)
                 {
-                    if (building == null) continue;
-
-                    var operational = building.GetComponent<Operational>();
-                    
-                    buildingList.Add(new BuildingData
+                    foreach (var building in completeBuildings)
                     {
-                        Cell = Grid.PosToCell(building.transform.position),
-                        PrefabId = building.Def?.PrefabID?.ToString() ?? "",
-                        IsOperational = operational?.IsOperational ?? false,
-                        Orientation = (int)building.Orientation
-                    });
+                        if (building == null) continue;
+
+                        var data = CreateBuildingData(building.gameObject, building.Def?.PrefabID?.ToString(), true);
+                        if (data != null) buildingList.Add(data);
+                    }
                 }
+                
+                Debug.Log($"[Antigravity] Serialized {buildingList.Count} buildings for sync");
             }
             catch (Exception ex)
             {
@@ -360,6 +357,149 @@ namespace Antigravity.Core.Sync
 
             string json = JsonConvert.SerializeObject(buildingList);
             return Encoding.UTF8.GetBytes(json);
+        }
+        
+        private static BuildingData CreateBuildingData(GameObject go, string prefabId, bool isComplete)
+        {
+            if (go == null || string.IsNullOrEmpty(prefabId)) return null;
+            
+            var building = go.GetComponent<Building>();
+            var operational = go.GetComponent<Operational>();
+            var deconstructable = go.GetComponent<Deconstructable>();
+            var door = go.GetComponent<Door>();
+            var buildingEnabled = go.GetComponent<BuildingEnabledButton>();
+            
+            return new BuildingData
+            {
+                Cell = Grid.PosToCell(go.transform.position),
+                PrefabId = prefabId,
+                IsOperational = operational?.IsOperational ?? false,
+                Orientation = building != null ? (int)building.Orientation : 0,
+                IsComplete = isComplete,
+                IsMarkedForDeconstruct = deconstructable?.IsMarkedForDeconstruction() ?? false,
+                IsEnabled = buildingEnabled?.IsEnabled ?? true,
+                DoorControlState = door != null ? (int)door.CurrentState : -1
+            };
+        }
+        
+        /// <summary>
+        /// Deserialize and apply buildings data from host
+        /// </summary>
+        public static void ApplyBuildingsData(byte[] data)
+        {
+            if (data == null || data.Length == 0) return;
+
+            try
+            {
+                string json = Encoding.UTF8.GetString(data);
+                var hostBuildings = JsonConvert.DeserializeObject<List<BuildingData>>(json);
+                
+                if (hostBuildings == null || hostBuildings.Count == 0) return;
+                
+                // Create lookup of host buildings by cell+prefab
+                var hostLookup = new Dictionary<string, BuildingData>();
+                foreach (var b in hostBuildings)
+                {
+                    string key = $"{b.Cell}_{b.PrefabId}";
+                    hostLookup[key] = b;
+                }
+                
+                int synced = 0;
+                int created = 0;
+                int removed = 0;
+                
+                // Check local buildings against host
+                var localBuildings = new HashSet<string>();
+                
+                foreach (var building in Components.BuildingCompletes.Items.ToList())
+                {
+                    if (building == null) continue;
+                    
+                    int cell = Grid.PosToCell(building.transform.position);
+                    string prefabId = building.Def?.PrefabID?.ToString() ?? "";
+                    string key = $"{cell}_{prefabId}";
+                    localBuildings.Add(key);
+                    
+                    if (hostLookup.TryGetValue(key, out var hostData))
+                    {
+                        // Building exists on both - sync state
+                        SyncBuildingState(building.gameObject, hostData);
+                        synced++;
+                    }
+                    else
+                    {
+                        // Building exists locally but not on host - mark for deconstruct
+                        var deconstructable = building.GetComponent<Deconstructable>();
+                        if (deconstructable != null && !deconstructable.IsMarkedForDeconstruction())
+                        {
+                            building.gameObject.Trigger(-790448070); // Deconstruct trigger
+                            removed++;
+                        }
+                    }
+                }
+                
+                // Create buildings that exist on host but not locally
+                foreach (var hostData in hostBuildings)
+                {
+                    if (!hostData.IsComplete) continue; // Only create complete buildings
+                    
+                    string key = $"{hostData.Cell}_{hostData.PrefabId}";
+                    if (!localBuildings.Contains(key))
+                    {
+                        // Try to create the building
+                        var def = Assets.GetBuildingDef(hostData.PrefabId);
+                        if (def != null)
+                        {
+                            Vector3 pos = Grid.CellToPosCBC(hostData.Cell, Grid.SceneLayer.Building);
+                            def.Build(hostData.Cell, (Orientation)hostData.Orientation, null, 
+                                def.DefaultElements(), 293.15f, null, false, GameClock.Instance.GetTime());
+                            created++;
+                        }
+                    }
+                }
+
+                Debug.Log($"[Antigravity] Buildings resync: synced={synced}, created={created}, removed={removed}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Antigravity] Error applying buildings data: {ex.Message}");
+            }
+        }
+        
+        private static void SyncBuildingState(GameObject go, BuildingData hostData)
+        {
+            // Sync door state
+            var door = go.GetComponent<Door>();
+            if (door != null && hostData.DoorControlState >= 0)
+            {
+                var targetState = (Door.ControlState)hostData.DoorControlState;
+                if (door.CurrentState != targetState)
+                {
+                    door.QueueStateChange(targetState);
+                }
+            }
+            
+            // Sync enabled state
+            var enabledButton = go.GetComponent<BuildingEnabledButton>();
+            if (enabledButton != null && enabledButton.IsEnabled != hostData.IsEnabled)
+            {
+                enabledButton.IsEnabled = hostData.IsEnabled;
+            }
+            
+            // Sync deconstruct marker
+            var deconstructable = go.GetComponent<Deconstructable>();
+            if (deconstructable != null)
+            {
+                bool isMarked = deconstructable.IsMarkedForDeconstruction();
+                if (hostData.IsMarkedForDeconstruct && !isMarked)
+                {
+                    go.Trigger(-790448070); // Mark for deconstruct
+                }
+                else if (!hostData.IsMarkedForDeconstruct && isMarked)
+                {
+                    go.Trigger(2127324410); // Cancel deconstruct
+                }
+            }
         }
 
         #endregion
@@ -383,6 +523,12 @@ namespace Antigravity.Core.Sync
             public string PrefabId;
             public bool IsOperational;
             public int Orientation;
+            
+            // Extended fields for resync
+            public bool IsComplete;
+            public bool IsMarkedForDeconstruct;
+            public bool IsEnabled;
+            public int DoorControlState;  // For doors: 0=Auto, 1=Open, 2=Locked
         }
 
         [Serializable]

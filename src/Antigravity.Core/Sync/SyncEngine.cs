@@ -127,34 +127,112 @@ namespace Antigravity.Core.Sync
 
         /// <summary>
         /// Perform a full state synchronization.
+        /// Saves current game state and sends to all clients.
         /// </summary>
         public static void PerformHardSync()
         {
             if (!Network.NetworkManager.IsHost) return;
-
+            if (_isPerformingHardSync) return; // Prevent re-entry
+            
+            _isPerformingHardSync = true;
             OnBeforeHardSync?.Invoke();
 
             try
             {
-                // TODO: Implement actual hard sync logic
+                Log.Info("[Antigravity] Starting hard sync...");
+                
                 // 1. Pause game
-                // 2. Save game state
-                // 3. Send save to all clients
-                // 4. Clients load save
-                // 5. Resume game
-
+                if (SpeedControlScreen.Instance != null)
+                {
+                    SpeedControlScreen.Instance.Pause(playSound: false);
+                }
+                
+                // 2. Save current game state
+                string colonyName = SaveGame.Instance?.BaseName ?? "Colony";
+                string savePath = SaveLoader.Instance?.Save(colonyName, isAutoSave: false, updateSavePointer: false);
+                
+                if (string.IsNullOrEmpty(savePath) || !System.IO.File.Exists(savePath))
+                {
+                    Log.Error("[Antigravity] Hard sync failed: Could not save game");
+                    return;
+                }
+                
+                // 3. Read save file bytes
+                byte[] saveData = System.IO.File.ReadAllBytes(savePath);
+                Log.Info($"[Antigravity] Hard sync save: {saveData.Length} bytes");
+                
+                // 4. Compress and send to all clients
+                byte[] compressedData = Network.MessageSerializer.Compress(saveData);
+                
+                var startingMsg = new Network.GameStartingMessage
+                {
+                    IsLoadingSave = true,
+                    ColonyName = colonyName,
+                    TotalDataSize = compressedData.Length,
+                    ChunkCount = CalculateChunkCount(compressedData.Length),
+                    IsHardSync = true  // Mark as hard sync so clients know
+                };
+                
+                // Send to all clients
+                Network.GameSession.SendToAllClients(Network.MessageType.GameStarting, startingMsg);
+                
+                // Send world data in chunks
+                SendHardSyncChunks(compressedData);
+                
                 LastHardSyncTick = CurrentTick;
-                SyncErrorCount = 0; // Reset error count after successful sync
-
-                Log.Info($"[Antigravity] Hard sync performed at tick {CurrentTick}");
+                SyncErrorCount = 0;
+                
+                Log.Info($"[Antigravity] Hard sync sent at tick {CurrentTick}");
+                
+                // 5. Resume game after short delay (clients will reload and signal ready)
+                // For now, just unpause - clients will catch up
+                if (SpeedControlScreen.Instance != null)
+                {
+                    SpeedControlScreen.Instance.Unpause(playSound: false);
+                }
             }
             catch (Exception ex)
             {
                 Log.Error($"[Antigravity] Hard sync failed: {ex.Message}");
                 OnSyncError?.Invoke($"Hard sync failed: {ex.Message}");
             }
+            finally
+            {
+                _isPerformingHardSync = false;
+            }
 
             OnAfterHardSync?.Invoke();
+        }
+        
+        private static bool _isPerformingHardSync = false;
+        
+        private static int CalculateChunkCount(int dataSize)
+        {
+            const int CHUNK_SIZE = 64 * 1024;
+            return (dataSize + CHUNK_SIZE - 1) / CHUNK_SIZE;
+        }
+        
+        private static void SendHardSyncChunks(byte[] compressedData)
+        {
+            const int CHUNK_SIZE = 64 * 1024;
+            int chunkCount = CalculateChunkCount(compressedData.Length);
+            
+            for (int i = 0; i < chunkCount; i++)
+            {
+                int offset = i * CHUNK_SIZE;
+                int length = Math.Min(CHUNK_SIZE, compressedData.Length - offset);
+                byte[] chunkData = new byte[length];
+                Buffer.BlockCopy(compressedData, offset, chunkData, 0, length);
+                
+                var chunk = new Network.WorldDataChunk
+                {
+                    ChunkIndex = i,
+                    TotalChunks = chunkCount,
+                    Data = chunkData
+                };
+                
+                Network.GameSession.SendToAllClients(Network.MessageType.WorldDataChunk, chunk);
+            }
         }
 
         /// <summary>
