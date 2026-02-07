@@ -27,7 +27,7 @@ namespace Antigravity
         /// <summary>
         /// Current mod version.
         /// </summary>
-        public const string Version = "0.0.31-alpha";
+        public const string Version = "0.0.37-alpha";
 
         /// <summary>
         /// Called when the mod is loaded.
@@ -74,6 +74,12 @@ namespace Antigravity
                 
                 // Register Steam join callback early (so invites work from friend list)
                 Core.Network.SteamNetworkManager.EnsureJoinCallbackRegistered();
+                
+                // Initialize crash reporting (if enabled)
+                if (Core.MultiplayerConfig.EnableCrashReporting)
+                {
+                    Core.Telemetry.CrashReporter.Initialize();
+                }
                 
                 Logger.Log("Core systems initialized successfully.");
             }

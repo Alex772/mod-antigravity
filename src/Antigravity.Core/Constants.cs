@@ -11,6 +11,11 @@ namespace Antigravity.Core
         public const string ModId = "Antigravity.Multiplayer";
 
         /// <summary>
+        /// Current mod version.
+        /// </summary>
+        public const string ModVersion = "0.0.37";
+
+        /// <summary>
         /// Network protocol version. Increment when protocol changes.
         /// </summary>
         public const int ProtocolVersion = 1;

@@ -1,115 +1,114 @@
-[h1]🚀 Antigravity - Multiplayer Mod[/h1]
+[h1]🚀 Antigravity - Mod Multiplayer[/h1]
 
-[b]Play Oxygen Not Included with your friends![/b]
+[b]Jogue Oxygen Not Included com seus amigos![/b]
 
-This mod adds multiplayer support using Steam P2P networking - no IP or port forwarding required!
+Este mod adiciona suporte multiplayer usando Steam P2P - sem precisar de IP ou port forwarding!
 
-[h2]✨ Current Features (v0.0.36-alpha)[/h2]
+[h2]✨ Funcionalidades Atuais (v0.0.37-alpha)[/h2]
 
-[h3]🔗 Connection[/h3]
+[h3]🔗 Conexão[/h3]
 [list]
-[*] 🎮 [b]Multiplayer Menu[/b] - Button on main menu
-[*] 🔗 [b]Steam P2P[/b] - Connect via Steam (no IP needed!)
-[*] 📋 [b]Lobby System[/b] - Create/join lobbies with code
-[*] 📋 [b]Copy Code[/b] - One click to copy lobby code
-[*] 🚀 [b]Start Flow[/b] - Host selects new game or load save
-[*] ✅ [b]Ready Check[/b] - Game waits for all players to load before starting
-[*] 🔄 [b]Late Join[/b] - Join mid-game! Game pauses and syncs current state
+[*] 🎮 [b]Menu Multiplayer[/b] - Botão no menu principal
+[*] 🔗 [b]Steam P2P[/b] - Conecte via Steam (sem precisar de IP!)
+[*] 📋 [b]Sistema de Lobby[/b] - Crie/entre em lobbies com código
+[*] 📋 [b]Copiar Código[/b] - Um clique para copiar código do lobby
+[*] 🚀 [b]Fluxo de Início[/b] - Host seleciona novo jogo ou carregar save
+[*] ✅ [b]Verificação de Ready[/b] - Jogo espera todos carregarem antes de iniciar
+[*] 🔄 [b]Entrada Tardia[/b] - Entre no meio do jogo! Jogo pausa e sincroniza estado atual
 [/list]
 
-[h3]⚙️ Synchronized Actions[/h3]
+[h3]⚙️ Ações Sincronizadas[/h3]
 [list]
-[*] ⛏️ [b]Dig/Cancel Dig[/b] - Mining commands
-[*] 🏗️ [b]Build/Deconstruct[/b] - Building placement and removal
-[*] 🔧 [b]Utility Build[/b] - Wires, pipes, conveyors with proper connections
-[*] ✂️ [b]Disconnect Utility[/b] - Cut wires/pipes
-[*] ⏸️ [b]Game Speed[/b] - Pause/unpause/speed changes (fully synced!)
-[*] ⭐ [b]Priority[/b] - Tool and building priority
-[*] 🚿 [b]Mop/Sweep/Disinfect/Harvest[/b] - Area tools
-[*] 🐾 [b]Capture[/b] - Critter capture
+[*] ⛏️ [b]Cavar/Cancelar Escavação[/b] - Comandos de mineração
+[*] 🏗️ [b]Construir/Desconstruir[/b] - Colocação e remoção de construções
+[*] 🔧 [b]Construir Utilidades[/b] - Fios, canos, esteiras com conexões corretas
+[*] ✂️ [b]Desconectar Utilidade[/b] - Cortar fios/canos
+[*] ⏸️ [b]Velocidade do Jogo[/b] - Pausar/despausar/mudanças de velocidade (totalmente sincronizado!)
+[*] ⭐ [b]Prioridade[/b] - Ferramenta e prioridade de construções
+[*] 🚿 [b]Limpar/Varrer/Desinfetar/Colher[/b] - Ferramentas de área
+[*] 🐾 [b]Capturar[/b] - Captura de criaturas
 [/list]
 
-[h3]🏠 Building Settings Sync[/h3]
+[h3]🏠 Sincronização de Configurações de Construções[/h3]
 [list]
-[*] 🚪 [b]Door State[/b] - Open/Lock/Auto
-[*] 📦 [b]Storage Filters[/b] - What items to store
-[*] 📦 [b]Storage Capacity[/b] - Slider setting
-[*] 🛏️ [b]Assignable[/b] - Bed/Toilet/Mess table assignments
-[*] ⚡ [b]Building Enable/Disable[/b] - On/Off checkbox
-[*] 🔬 [b]Filterable[/b] - Valve/Pump element filters
-[*] 📊 [b]Thresholds[/b] - Sensor values
-[*] 🔘 [b]Logic Switch[/b] - On/Off state
+[*] 🚪 [b]Estado da Porta[/b] - Aberto/Trancado/Automático
+[*] 📦 [b]Filtros de Armazenamento[/b] - Quais itens armazenar
+[*] 📦 [b]Capacidade de Armazenamento[/b] - Configuração do slider
+[*] 🛏️ [b]Atribuível[/b] - Atribuições de cama/banheiro/mesa
+[*] ⚡ [b]Ativar/Desativar Construção[/b] - Checkbox Ligado/Desligado
+[*] 🔬 [b]Filtrável[/b] - Filtros de válvula/bomba
+[*] 📊 [b]Limiares[/b] - Valores de sensores
+[*] 🔘 [b]Switch Lógico[/b] - Estado Ligado/Desligado
 [/list]
 
-[h3]🌍 World & Duplicant Sync[/h3]
+[h3]🌍 Sincronização de Mundo e Duplicants[/h3]
 [list]
-[*] 💨 [b]Element Changes[/b] - Gas/liquid/solid modifications sync in real-time
-[*] 📦 [b]Item Sync[/b] - Pickupable items in world
-[*] 👤 [b]Duplicant Positions[/b] - Location updates every 0.5 seconds
-[*] 🎯 [b]Chore Sync[/b] - Task assignments synchronized
-[*] 📚 [b]Research Sync[/b] - Tech tree progress shared
-[*] ⭐ [b]Skills Sync[/b] - Skill points and masteries
-[*] 📅 [b]Schedule Sync[/b] - Duplicant schedules shared
+[*] 💨 [b]Mudanças de Elementos[/b] - Modificações de gás/líquido/sólido sincronizam em tempo real
+[*] 📦 [b]Sincronização de Itens[/b] - Itens coletáveis no mundo
+[*] 👤 [b]Posições de Duplicants[/b] - Atualizações de localização a cada 0.5 segundos
+[*] 🎬 [b]Sincronização de Animações[/b] - Animações de Duplicants sincronizadas com o Host
+[*] 🎯 [b]Sincronização de Tarefas[/b] - Atribuições de tarefas sincronizadas
+[*] 📚 [b]Sincronização de Pesquisa[/b] - Progresso da árvore de tecnologia compartilhado
+[*] ⭐ [b]Sincronização de Habilidades[/b] - Pontos de habilidade e maestrias
+[*] 📅 [b]Sincronização de Agenda[/b] - Agendas de Duplicants compartilhadas
 [/list]
 
-[h3]🔄 Resync System (NEW!)[/h3]
+[h3]🔄 Sistema de Resync[/h3]
 [list]
-[*] 🔍 [b]Periodic Sync Check[/b] - Host verifies sync every 60 seconds
-[*] 🏗️ [b]Building Resync[/b] - Auto-corrects building differences
-[*] 💾 [b]Hard Sync[/b] - Full game state resync every game day
-[*] 🔌 [b]Host Disconnect[/b] - Clients return to menu automatically
+[*] 🔍 [b]Verificação Periódica[/b] - Host verifica sincronização a cada 60 segundos
+[*] 🏗️ [b]Resync de Construções[/b] - Corrige automaticamente diferenças de construções
+[*] 💾 [b]Hard Sync[/b] - Resync completo do estado do jogo a cada dia de jogo
+[*] 🔌 [b]Desconexão do Host[/b] - Clientes voltam ao menu automaticamente
 [/list]
 
-[h2]🎮 How to Use[/h2]
+[h2]🎮 Como Usar[/h2]
 
-[b]Host a Session:[/b]
+[b]Hospedar uma Sessão:[/b]
 [olist]
-[*] Click "MULTIPLAYER" on main menu
-[*] Click "HOST GAME (Steam)"
-[*] Click "COPY CODE" and share with friend
-[*] Click "START GAME" when ready
-[*] Game auto-starts when all players finish loading!
+[*] Clique em "MULTIPLAYER" no menu principal
+[*] Clique em "HOST GAME (Steam)"
+[*] Clique em "COPY CODE" e compartilhe com amigo
+[*] Clique em "START GAME" quando pronto
+[*] Jogo inicia automaticamente quando todos terminarem de carregar!
 [/olist]
 
-[b]Join a Session:[/b]
+[b]Entrar numa Sessão:[/b]
 [olist]
-[*] Click "MULTIPLAYER" on main menu
-[*] Paste the lobby code
-[*] Click "JOIN GAME"
-[*] Wait for host to start - world will load automatically
+[*] Clique em "MULTIPLAYER" no menu principal
+[*] Cole o código do lobby
+[*] Clique em "JOIN GAME"
+[*] Espere o host iniciar - o mundo carregará automaticamente
 [/olist]
 
-[h2]🆕 What's New in v0.0.36[/h2]
+[h2]🆕 Novidades na v0.0.37[/h2]
 [list]
-[*] 🔄 [b]Late Join Support[/b] - Join mid-game! Game pauses and syncs current state
-[*] 💾 [b]Hard Sync[/b] - Periodic full resync every game day to prevent drift
-[*] 🏗️ [b]Building Resync[/b] - Auto-corrects building mismatches
-[*] 🔌 [b]Host Disconnect Handling[/b] - Clients return to menu cleanly
+[*] 🎬 [b]Sincronização de Animações[/b] - Animações de Duplicants agora sincronizam com o Host!
+[*] 📝 [b]Sistema de Log de Crashes[/b] - Erros são salvos automaticamente para debug
+[*] 🔧 [b]Melhorias de Estabilidade[/b] - IA do cliente com override visual do Host
 [/list]
 
-[h2]⚠️ Alpha Version - Need Your Feedback![/h2]
+[h2]⚠️ Versão Alpha - Precisamos do Seu Feedback![/h2]
 
-This is an early alpha! Many things may not work correctly.
+Esta é uma versão alpha inicial! Muitas coisas podem não funcionar corretamente.
 
-[b]Please report:[/b]
+[b]Por favor reporte:[/b]
 [list]
-[*] Actions that don't sync between players
-[*] Desyncs or crashes
-[*] Features you want prioritized
+[*] Ações que não sincronizam entre jogadores
+[*] Desyncs ou crashes
+[*] Funcionalidades que você quer priorizadas
 [/list]
 
-[h2]🐛 Known Issues[/h2]
+[h2]🐛 Problemas Conhecidos[/h2]
 [list]
-[*] Duplicant animations may differ slightly between players
-[*] Some edge cases in building placement
-[*] Performance may vary with large colonies
+[*] Alguns casos extremos na colocação de construções
+[*] Performance pode variar com colônias grandes
 [/list]
 
 [h2]🔗 Links[/h2]
-[url=https://github.com/Alex772/mod-antigravity]GitHub Repository[/url] - Report issues and contribute!
+[url=https://github.com/Alex772/mod-antigravity]Repositório GitHub[/url] - Reporte problemas e contribua!
 
-[h2]💖 Support[/h2]
-If you enjoy this mod, please rate it and leave feedback!
-Your reports help make multiplayer ONI a reality.
+[h2]💖 Apoie[/h2]
+Se você gostou deste mod, por favor avalie e deixe feedback!
+Seus relatórios ajudam a tornar o multiplayer do ONI uma realidade.
 
-[i]Made with ❤️ for the ONI community[/i]
+[i]Feito com ❤️ para a comunidade ONI[/i]

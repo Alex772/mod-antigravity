@@ -2,12 +2,14 @@
 # Uso: .\update-version.ps1 [major|minor|patch] ou .\update-version.ps1 <versao>
 
 param(
-    [Parameter(Position=0)]
+    [Parameter(Position = 0)]
     [string]$VersionArg = "patch"
 )
 
 $modInfoPath = "$PSScriptRoot\mod_info.yaml"
 $distModInfoPath = "$PSScriptRoot\dist\Antigravity\mod_info.yaml"
+$constantsPath = "$PSScriptRoot\src\Antigravity.Core\Constants.cs"
+$antigravityModPath = "$PSScriptRoot\src\Antigravity.Mod\AntigravityMod.cs"
 
 # Ler versão atual
 $content = Get-Content $modInfoPath -Raw
@@ -39,7 +41,8 @@ if ($content -match 'version:\s*(\d+)\.(\d+)\.(\d+)') {
                 $major = [int]$Matches[1]
                 $minor = [int]$Matches[2]
                 $patch = [int]$Matches[3]
-            } else {
+            }
+            else {
                 Write-Host "Uso: .\update-version.ps1 [major|minor|patch] ou .\update-version.ps1 <X.Y.Z>" -ForegroundColor Yellow
                 exit 1
             }
@@ -48,7 +51,7 @@ if ($content -match 'version:\s*(\d+)\.(\d+)\.(\d+)') {
     
     $newVersion = "$major.$minor.$patch"
     
-    # Atualizar arquivo principal
+    # Atualizar arquivo principal (mod_info.yaml)
     $newContent = $content -replace 'version:\s*\d+\.\d+\.\d+', "version: $newVersion"
     Set-Content $modInfoPath -Value $newContent -NoNewline
     
@@ -59,12 +62,32 @@ if ($content -match 'version:\s*(\d+)\.(\d+)\.(\d+)') {
         Set-Content $distModInfoPath -Value $distContent -NoNewline
     }
     
+    # Atualizar Constants.cs
+    if (Test-Path $constantsPath) {
+        $constantsContent = Get-Content $constantsPath -Raw
+        $constantsContent = $constantsContent -replace 'ModVersion\s*=\s*"[^"]*"', "ModVersion = `"$newVersion`""
+        Set-Content $constantsPath -Value $constantsContent -NoNewline
+    }
+    
+    # Atualizar AntigravityMod.cs
+    if (Test-Path $antigravityModPath) {
+        $modContent = Get-Content $antigravityModPath -Raw
+        $modContent = $modContent -replace 'Version\s*=\s*"[^"]*"', "Version = `"$newVersion-alpha`""
+        Set-Content $antigravityModPath -Value $modContent -NoNewline
+    }
+    
     Write-Host "Versao atualizada: $currentVersion -> $newVersion" -ForegroundColor Green
     Write-Host ""
     Write-Host "Arquivos atualizados:" -ForegroundColor White
     Write-Host "  - $modInfoPath" -ForegroundColor Gray
     if (Test-Path $distModInfoPath) {
         Write-Host "  - $distModInfoPath" -ForegroundColor Gray
+    }
+    if (Test-Path $constantsPath) {
+        Write-Host "  - $constantsPath" -ForegroundColor Gray
+    }
+    if (Test-Path $antigravityModPath) {
+        Write-Host "  - $antigravityModPath" -ForegroundColor Gray
     }
     
     # Mostrar próximos passos
@@ -74,7 +97,8 @@ if ($content -match 'version:\s*(\d+)\.(\d+)\.(\d+)') {
     Write-Host "  2. git add . && git commit -m 'v$newVersion'" -ForegroundColor Gray
     Write-Host "  3. git tag v$newVersion && git push --tags" -ForegroundColor Gray
     
-} else {
+}
+else {
     Write-Host "Erro: Nao foi possivel encontrar a versao em $modInfoPath" -ForegroundColor Red
     exit 1
 }

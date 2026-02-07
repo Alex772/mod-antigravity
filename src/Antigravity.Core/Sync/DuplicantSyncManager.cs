@@ -606,6 +606,22 @@ namespace Antigravity.Core.Sync
                         }
                     }
                 }
+                
+                // Animation data - capture current animation state
+                string currentAnimName = null;
+                int currentAnimFrame = 0;
+                bool facingLeft = false;
+                
+                var animController = minion.GetComponent<KBatchedAnimController>();
+                if (animController != null)
+                {
+                    if (animController.currentAnim.IsValid)
+                    {
+                        currentAnimName = animController.currentAnim.ToString();
+                    }
+                    currentAnimFrame = animController.GetCurrentFrameIndex();
+                    facingLeft = animController.FlipX;
+                }
 
                 var cmd = new Commands.PositionSyncCommand
                 {
@@ -619,7 +635,10 @@ namespace Antigravity.Core.Sync
                     CurrentChoreTypeId = choreTypeId,
                     CurrentChoreGroupId = choreGroupId,
                     ChoreTargetCell = choreTargetCell,
-                    ChoreTargetPrefabId = choreTargetPrefabId
+                    ChoreTargetPrefabId = choreTargetPrefabId,
+                    CurrentAnimName = currentAnimName,
+                    CurrentAnimFrame = currentAnimFrame,
+                    FacingLeft = facingLeft
                 };
 
                 Commands.CommandManager.SendCommand(cmd);
@@ -678,6 +697,33 @@ namespace Antigravity.Core.Sync
             {
                 // Small drift while stationary - gently correct
                 minion.transform.SetPosition(hostPos);
+            }
+            
+            // ANIMATION OVERRIDE: Apply Host's animation to client Duplicant
+            if (!string.IsNullOrEmpty(cmd.CurrentAnimName))
+            {
+                var animController = minion.GetComponent<KBatchedAnimController>();
+                if (animController != null)
+                {
+                    // Only change animation if it's different from current
+                    string currentAnimName = animController.currentAnim.IsValid ? animController.currentAnim.ToString() : null;
+                    if (currentAnimName != cmd.CurrentAnimName)
+                    {
+                        try
+                        {
+                            animController.Play(cmd.CurrentAnimName, KAnim.PlayMode.Loop, 1f, 0f);
+                            Debug.Log($"[Antigravity.AnimSync] {minion.name}: {currentAnimName} -> {cmd.CurrentAnimName}");
+                        }
+                        catch (System.Exception ex)
+                        {
+                            // Animation might not exist on client - silently ignore
+                            Debug.LogWarning($"[Antigravity.AnimSync] Failed to play anim {cmd.CurrentAnimName}: {ex.Message}");
+                        }
+                    }
+                    
+                    // Always sync facing direction
+                    animController.FlipX = cmd.FacingLeft;
+                }
             }
         }
 

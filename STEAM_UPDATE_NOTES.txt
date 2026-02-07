@@ -1,43 +1,48 @@
-[h1]🎉 v0.0.36 - Resync & Late Join[/h1]
+[h1]🎉 v0.0.37 - Sincronização de Animações[/h1]
 
-[b]28 de Janeiro de 2026[/b]
+[b]7 de Fevereiro de 2026[/b]
 
 [h2]🆕 Novas Funcionalidades[/h2]
 [list]
-[*] [b]Late Join (Entrada Tardia)[/b]
+[*] [b]Sincronização de Animações de Duplicants[/b]
   [list]
-  [*] Jogadores podem entrar durante a partida!
-  [*] Jogo pausa automaticamente para todos
-  [*] Novo jogador recebe o save atual
-  [*] Jogo continua quando todos estiverem prontos
+  [*] Animações agora sincronizam do Host para todos os clientes!
+  [*] Duplicants não ficam mais "idle" no cliente
+  [*] Direção (esquerda/direita) também sincronizada
+  [*] IA do cliente continua rodando, mas animação visual é sobreposta pelo Host
   [/list]
-[*] [b]Hard Sync Periódico[/b]
+[*] [b]Sistema de Log de Crashes[/b]
   [list]
-  [*] A cada dia de jogo, host envia save completo
-  [*] Garante que todos fiquem 100% sincronizados
-  [*] Previne drift de longo prazo
-  [/list]
-[*] [b]Building Resync[/b]
-  [list]
-  [*] Sistema detecta diferenças de buildings entre host/cliente
-  [*] Corrige automaticamente: cria faltantes, remove extras
-  [*] Sincroniza estados: portas, enable/disable, deconstruct
+  [*] Erros do Antigravity são salvos automaticamente
+  [*] Logs em: %APPDATA%\..\LocalLow\Klei\Oxygen Not Included\Antigravity\
+  [*] Facilita debug de problemas reportados por jogadores
   [/list]
 [/list]
 
-[h2]🔧 Melhorias[/h2]
+[h2]🔧 Melhorias Técnicas[/h2]
 [list]
-[*] [b]Host Disconnect[/b] - Clientes voltam ao menu automaticamente
-[*] [b]Lobby Cleanup[/b] - Lobby é fechado quando host sai
-[*] [b]Sync Check a cada 60s[/b] - Verificação periódica de checksums
+[*] [b]PositionSyncCommand Expandido[/b] - Agora inclui dados de animação
+[*] [b]Override Visual[/b] - Cliente recebe animação do Host a cada sync (0.5s)
+[*] [b]HashedString Fix[/b] - Corrigido problema com nomes de animação
 [/list]
 
-[h2]📋 Sistema de Sync Completo[/h2]
+[h2]📋 Como Funciona[/h2]
 [list]
-[*] ✅ Position Sync - 0.5 segundos
-[*] ✅ Partial Sync (checksums) - 60 segundos
-[*] ✅ Hard Sync (save/reload) - 1 dia de jogo
+[*] Host executa animação (ex: cavar)
+[*] A cada 0.5 segundos, posição + animação são enviados
+[*] Cliente recebe e sobrepõe a animação visual
+[*] Resultado: Duplicants fazem a mesma coisa em todos os computadores!
 [/list]
+
+[h2]🐛 Correções[/h2]
+[list]
+[*] Duplicants não ficam mais parados (idle) no cliente quando deveriam estar trabalhando
+[*] Melhor consistência visual entre Host e Cliente
+[/list]
+
+[h2]📁 Logs de Crash[/h2]
+Para reportar bugs, inclua o arquivo de log:
+[code]%APPDATA%\..\LocalLow\Klei\Oxygen Not Included\Antigravity\crash_reports.log[/code]
 
 [h2]🐛 Reportar Bugs[/h2]
 Encontrou problema? Reporte no GitHub: [url=https://github.com/Alex772/mod-antigravity/issues]Issues[/url]

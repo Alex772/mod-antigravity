@@ -34,6 +34,18 @@ namespace Antigravity.Core
         public static bool VerboseLogging { get; set; } = true;
 
         /// <summary>
+        /// Discord webhook URL for remote crash reporting.
+        /// Set this to receive crash reports from players.
+        /// Example: https://discord.com/api/webhooks/xxx/yyy
+        /// </summary>
+        public static string CrashReportWebhook { get; set; } = null;
+
+        /// <summary>
+        /// Enable remote crash reporting (opt-in by users).
+        /// </summary>
+        public static bool EnableCrashReporting { get; set; } = true;
+
+        /// <summary>
         /// Load configuration (can be extended to load from file).
         /// </summary>
         public static void Load()

@@ -549,9 +549,15 @@ namespace Antigravity.Core.Commands
         public string CurrentChoreGroupId { get; set; }
         public int ChoreTargetCell { get; set; }
         public string ChoreTargetPrefabId { get; set; }
+        
+        // Animation override data (for visual sync on client)
+        public string CurrentAnimName { get; set; }
+        public int CurrentAnimFrame { get; set; }
+        public bool FacingLeft { get; set; }
 
         public PositionSyncCommand() : base(GameCommandType.PositionSync) { }
     }
+
 
     /// <summary>
     /// Synchronize the Random seed to ensure deterministic behavior.

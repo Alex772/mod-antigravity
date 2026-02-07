@@ -6,6 +6,14 @@ description: Como atualizar a versão do mod Antigravity
 
 Este workflow explica como atualizar a versão do mod de forma rápida.
 
+## Arquivos Atualizados Automaticamente
+
+O script `update-version.ps1` atualiza os seguintes arquivos:
+- `mod_info.yaml` - Versão do mod para o jogo
+- `dist/Antigravity/mod_info.yaml` - Cópia de distribuição
+- `src/Antigravity.Core/Constants.cs` - Constante `ModVersion`
+- `src/Antigravity.Mod/AntigravityMod.cs` - Constante `Version`
+
 ## Comandos Disponíveis
 
 ### Incrementar versão patch (0.0.X)
