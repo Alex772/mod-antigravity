@@ -1,43 +1,40 @@
-[h1]🎉 v0.0.37 - Sincronização de Animações[/h1]
+[h1]🔧 v0.0.38 - Correções Críticas de Estabilidade[/h1]
 
-[b]7 de Fevereiro de 2026[/b]
+[b]25 de Fevereiro de 2026[/b]
 
-[h2]🆕 Novas Funcionalidades[/h2]
+Esta atualização foca em resolver os principais crashes e problemas de sincronização reportados pela comunidade. Obrigado por todos os feedbacks!
+
+[h2]🐛 Correções[/h2]
 [list]
-[*] [b]Sincronização de Animações de Duplicants[/b]
+[*] [b]Crash: NullReferenceException no Client[/b]
   [list]
-  [*] Animações agora sincronizam do Host para todos os clientes!
-  [*] Duplicants não ficam mais "idle" no cliente
-  [*] Direção (esquerda/direita) também sincronizada
-  [*] IA do cliente continua rodando, mas animação visual é sobreposta pelo Host
+  [*] Corrigido crash em ChoreConsumer.FindNextChore ao entrar no jogo
+  [*] Brain dos Duplicants agora é suspenso no client (Brain.Suspend)
+  [*] Guard de segurança impede busca autônoma de chores no client
+  [*] Resolve: crash ao entrar, duplicantes ociosos, erros de StateMachine
   [/list]
-[*] [b]Sistema de Log de Crashes[/b]
+[*] [b]SyncEngine Inativo[/b]
   [list]
-  [*] Erros do Antigravity são salvos automaticamente
-  [*] Logs em: %APPDATA%\..\LocalLow\Klei\Oxygen Not Included\Antigravity\
-  [*] Facilita debug de problemas reportados por jogadores
+  [*] SyncEngine.Start() agora é chamado corretamente na inicialização
+  [*] ProcessTick() avança o tick counter para syncs periódicos
+  [*] Syncs parciais e hard syncs agora funcionam como esperado
+  [/list]
+[*] [b]Divergência de Tempo entre Host e Client[/b]
+  [list]
+  [*] pauseCount agora é sincronizado do Host para o Client
+  [*] Menus no client não pausam mais o jogo (somente o Host controla pause)
+  [*] Host envia TimeSyncCommand a cada 5 segundos
+  [*] Client corrige automaticamente seu relógio e velocidade
+  [*] Resolve: drift de tempo, jogo travado no client, Time.timeScale em 0
   [/list]
 [/list]
 
 [h2]🔧 Melhorias Técnicas[/h2]
 [list]
-[*] [b]PositionSyncCommand Expandido[/b] - Agora inclui dados de animação
-[*] [b]Override Visual[/b] - Cliente recebe animação do Host a cada sync (0.5s)
-[*] [b]HashedString Fix[/b] - Corrigido problema com nomes de animação
-[/list]
-
-[h2]📋 Como Funciona[/h2]
-[list]
-[*] Host executa animação (ex: cavar)
-[*] A cada 0.5 segundos, posição + animação são enviados
-[*] Cliente recebe e sobrepõe a animação visual
-[*] Resultado: Duplicants fazem a mesma coisa em todos os computadores!
-[/list]
-
-[h2]🐛 Correções[/h2]
-[list]
-[*] Duplicants não ficam mais parados (idle) no cliente quando deveriam estar trabalhando
-[*] Melhor consistência visual entre Host e Cliente
+[*] [b]Novo: TimeSyncCommand[/b] - Sincroniza pauseCount, speed, GameTime, Cycle
+[*] [b]Novo: ClientBrainSuspendPatch[/b] - Suspende IA autônoma no client
+[*] [b]Novo: PauseCountSyncPatch[/b] - Bloqueia pause/unpause local no client
+[*] [b]SyncEngine[/b] - Agora é ativado e processado corretamente
 [/list]
 
 [h2]📁 Logs de Crash[/h2]
@@ -48,4 +45,4 @@ Para reportar bugs, inclua o arquivo de log:
 Encontrou problema? Reporte no GitHub: [url=https://github.com/Alex772/mod-antigravity/issues]Issues[/url]
 
 ---
-[i]Obrigado por testar o Antigravity! Seu feedback é essencial.[/i]
+[i]Obrigado por testar o Antigravity! Seu feedback é essencial para melhorar o mod.[/i]

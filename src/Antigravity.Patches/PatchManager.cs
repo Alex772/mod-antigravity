@@ -111,6 +111,10 @@ namespace Antigravity.Patches
             // ApplyResearchPatches(harmony);
             // ApplySkillsPatches(harmony);
             // ApplySchedulePatches(harmony);
+
+            // Phase 1 critical fixes
+            ApplyClientBrainPatches(harmony);
+            ApplyPauseCountSyncPatches(harmony);
         }
 
         private static void ApplySpeedSyncPatches(Harmony harmony)
@@ -640,6 +644,96 @@ namespace Antigravity.Patches
             UnityEngine.Debug.Log("[Antigravity] Schedule patches applied.");
         }
 
+        private static void ApplyClientBrainPatches(Harmony harmony)
+        {
+            // Patch Brain.OnSpawn - suspend brain on client to prevent autonomous chore searching
+            var brainOnSpawnMethod = AccessTools.Method(typeof(Brain), "OnSpawn");
+            if (brainOnSpawnMethod != null)
+            {
+                harmony.Patch(
+                    brainOnSpawnMethod,
+                    postfix: new HarmonyMethod(typeof(Sync.ClientBrainSuspendPatch.Brain_OnSpawn_Patch), "Postfix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] Brain.OnSpawn patch applied (client brain suspend).");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] Brain.OnSpawn method NOT FOUND!");
+            }
+
+            // Patch ChoreConsumer.FindNextChore - safety guard on client
+            var findNextChoreMethod = AccessTools.Method(typeof(ChoreConsumer), "FindNextChore", 
+                new System.Type[] { typeof(Chore.Precondition.Context).MakeByRefType(), typeof(System.Collections.Generic.List<Chore.Precondition.Context>) });
+            if (findNextChoreMethod == null)
+            {
+                // Try without parameters
+                findNextChoreMethod = AccessTools.Method(typeof(ChoreConsumer), "FindNextChore");
+            }
+            if (findNextChoreMethod != null)
+            {
+                harmony.Patch(
+                    findNextChoreMethod,
+                    prefix: new HarmonyMethod(typeof(Sync.ClientBrainSuspendPatch.ChoreConsumer_FindNextChore_Patch), "Prefix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] ChoreConsumer.FindNextChore patch applied (client safety guard).");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] ChoreConsumer.FindNextChore method NOT FOUND!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] Client brain patches applied.");
+        }
+
+        private static void ApplyPauseCountSyncPatches(Harmony harmony)
+        {
+            // Patch SpeedControlScreen.Pause - block local pauses on client
+            var pauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Pause", new System.Type[] { typeof(bool), typeof(bool) });
+            if (pauseMethod == null)
+            {
+                pauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Pause", new System.Type[] { typeof(bool) });
+            }
+            if (pauseMethod == null)
+            {
+                pauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Pause");
+            }
+            
+            if (pauseMethod != null)
+            {
+                harmony.Patch(
+                    pauseMethod,
+                    prefix: new HarmonyMethod(typeof(Sync.PauseCountSyncPatch.SpeedControlScreen_Pause_ClientBlock), "Prefix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SpeedControlScreen.Pause client-block prefix applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] SpeedControlScreen.Pause method NOT FOUND for client block!");
+            }
+
+            // Patch SpeedControlScreen.Unpause - block local unpauses on client
+            var unpauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Unpause", new System.Type[] { typeof(bool) });
+            if (unpauseMethod == null)
+            {
+                unpauseMethod = AccessTools.Method(typeof(SpeedControlScreen), "Unpause");
+            }
+            
+            if (unpauseMethod != null)
+            {
+                harmony.Patch(
+                    unpauseMethod,
+                    prefix: new HarmonyMethod(typeof(Sync.PauseCountSyncPatch.SpeedControlScreen_Unpause_ClientBlock), "Prefix")
+                );
+                UnityEngine.Debug.Log("[Antigravity] SpeedControlScreen.Unpause client-block prefix applied.");
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("[Antigravity] SpeedControlScreen.Unpause method NOT FOUND for client block!");
+            }
+
+            UnityEngine.Debug.Log("[Antigravity] PauseCount sync patches applied.");
+        }
+
         /// <summary>
         /// Remove all patches.
         /// </summary>
@@ -652,3 +746,4 @@ namespace Antigravity.Patches
         }
     }
 }
+

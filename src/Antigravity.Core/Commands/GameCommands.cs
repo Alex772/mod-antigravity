@@ -102,6 +102,9 @@ namespace Antigravity.Core.Commands
         SkillsSync = 132,            // Skills/jobs sync
         ScheduleSync = 133,          // Schedule sync
         
+        // Time / Pause sync
+        TimeSync = 135,              // GameClock + pauseCount sync
+
         // Generic
         Custom = 100
     }
@@ -622,5 +625,42 @@ namespace Antigravity.Core.Commands
         public string PrefabId { get; set; }
         public float Mass { get; set; }
         public int ElementId { get; set; }
+    }
+
+    /// <summary>
+    /// Command to synchronize GameClock time and pauseCount from host to client.
+    /// Sent periodically (every 5 seconds) by the host.
+    /// Client uses this to correct time drift and prevent pauseCount divergence.
+    /// </summary>
+    [Serializable]
+    public class TimeSyncCommand : GameCommand
+    {
+        /// <summary>
+        /// The host's current pauseCount from SpeedControlScreen.
+        /// Client will force its local pauseCount to match.
+        /// </summary>
+        public int PauseCount { get; set; }
+
+        /// <summary>
+        /// The host's current speed (0=1x, 1=2x, 2=3x).
+        /// </summary>
+        public int Speed { get; set; }
+
+        /// <summary>
+        /// The host's current GameClock time (total seconds since game start).
+        /// </summary>
+        public float GameTime { get; set; }
+
+        /// <summary>
+        /// The host's current cycle number.
+        /// </summary>
+        public int Cycle { get; set; }
+
+        /// <summary>
+        /// The host's timeSinceStartOfCycle.
+        /// </summary>
+        public float TimeSinceStartOfCycle { get; set; }
+
+        public TimeSyncCommand() : base(GameCommandType.TimeSync) { }
     }
 }

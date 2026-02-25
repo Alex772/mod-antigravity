@@ -4,7 +4,7 @@
 
 Este mod adiciona suporte multiplayer usando Steam P2P - sem precisar de IP ou port forwarding!
 
-[h2]✨ Funcionalidades Atuais (v0.0.37-alpha)[/h2]
+[h2]✨ Funcionalidades Atuais (v0.0.38-alpha)[/h2]
 
 [h3]🔗 Conexão[/h3]
 [list]
@@ -80,11 +80,11 @@ Este mod adiciona suporte multiplayer usando Steam P2P - sem precisar de IP ou p
 [*] Espere o host iniciar - o mundo carregará automaticamente
 [/olist]
 
-[h2]🆕 Novidades na v0.0.37[/h2]
+[h2]🆕 Novidades na v0.0.38[/h2]
 [list]
-[*] 🎬 [b]Sincronização de Animações[/b] - Animações de Duplicants agora sincronizam com o Host!
-[*] 📝 [b]Sistema de Log de Crashes[/b] - Erros são salvos automaticamente para debug
-[*] 🔧 [b]Melhorias de Estabilidade[/b] - IA do cliente com override visual do Host
+[*] 🧠 [b]Fix: Crash de Brain no Client[/b] - Corrigido NullReferenceException ao entrar no jogo
+[*] 🔄 [b]Fix: SyncEngine Ativado[/b] - Sincronizações periódicas agora funcionam corretamente
+[*] ⏱️ [b]Fix: Sincronização de Tempo[/b] - pauseCount e GameClock sincronizados entre Host e Client
 [/list]
 
 [h2]⚠️ Versão Alpha - Precisamos do Seu Feedback![/h2]

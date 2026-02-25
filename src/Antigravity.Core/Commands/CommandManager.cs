@@ -356,6 +356,8 @@ namespace Antigravity.Core.Commands
                     return MessageSerializer.DeserializePayload<SkillsSyncCommand>(payload);
                 case GameCommandType.ScheduleSync:
                     return MessageSerializer.DeserializePayload<ScheduleSyncCommand>(payload);
+                case GameCommandType.TimeSync:
+                    return MessageSerializer.DeserializePayload<TimeSyncCommand>(payload);
                 default:
                     return MessageSerializer.DeserializePayload<GameCommand>(payload);
             }
@@ -538,6 +540,11 @@ namespace Antigravity.Core.Commands
                     // Schedule sync
                     case GameCommandType.ScheduleSync:
                         Handlers.CommandHandler.ExecuteScheduleSyncCommand(command as ScheduleSyncCommand);
+                        break;
+                    
+                    // Time / Pause sync
+                    case GameCommandType.TimeSync:
+                        ExecuteTimeSyncInline(command as TimeSyncCommand);
                         break;
                         
                     default:

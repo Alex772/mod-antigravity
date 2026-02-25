@@ -13,7 +13,7 @@ namespace Antigravity.Core
         /// <summary>
         /// Current mod version.
         /// </summary>
-        public const string ModVersion = "0.0.37";
+        public const string ModVersion = "0.0.38";
 
         /// <summary>
         /// Network protocol version. Increment when protocol changes.

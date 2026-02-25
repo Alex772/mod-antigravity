@@ -1,6 +1,7 @@
 using UnityEngine;
 using Antigravity.Core.Network;
 using Antigravity.Core.Commands;
+using Antigravity.Core.Sync;
 using System.IO;
 
 namespace Antigravity.Client
@@ -84,6 +85,10 @@ namespace Antigravity.Client
         private float _itemSyncTimer = 0f;
         private const float ITEM_SYNC_INTERVAL = 10f;
 
+        // Time sync timer (Host only, every 5 seconds)
+        private float _timeSyncTimer = 0f;
+        private const float TIME_SYNC_INTERVAL = 5f;
+
         private void Update()
         {
             // CRITICAL: Always poll network messages, even when paused
@@ -117,6 +122,8 @@ namespace Antigravity.Client
             
             if (canRunHostSync)
             {
+                // Advance SyncEngine tick counter for periodic sync checks
+                SyncEngine.ProcessTick();
                 // Position sync (every 2 seconds)
                 _positionSyncTimer += Time.deltaTime;
                 if (_positionSyncTimer >= POSITION_SYNC_INTERVAL)
@@ -143,6 +150,14 @@ namespace Antigravity.Client
                 
                 // Element sync (continuous delta broadcast)
                 Antigravity.Core.Sync.ElementSyncManager.Instance?.Update();
+
+                // Time sync (every 5 seconds) — keeps client GameClock and pauseCount in sync
+                _timeSyncTimer += Time.deltaTime;
+                if (_timeSyncTimer >= TIME_SYNC_INTERVAL)
+                {
+                    _timeSyncTimer = 0f;
+                    SendTimeSync();
+                }
             }
             
             // Client: Process pending chores when game is loaded (even if paused - to prepare for unpause)
@@ -298,6 +313,11 @@ namespace Antigravity.Client
             // Initialize DuplicantSyncManager
             Antigravity.Core.Sync.DuplicantSyncManager.Instance.Initialize();
 
+            // Initialize and start SyncEngine for periodic sync checks
+            SyncEngine.Initialize();
+            SyncEngine.Start();
+            Debug.Log("[Antigravity] SyncEngine started.");
+
             // If host, send random seed to ensure deterministic behavior
             if (SteamNetworkManager.IsHost)
             {
@@ -357,5 +377,62 @@ namespace Antigravity.Client
         /// Check if world is currently loading.
         /// </summary>
         public bool IsLoadingWorld => _isLoadingWorld;
+
+        #region Time Sync (Fix 3)
+
+        // Cached reflection for SpeedControlScreen.pauseCount (private field)
+        private static System.Reflection.FieldInfo _pauseCountField;
+
+        /// <summary>
+        /// Sends the host's current time state (pauseCount, speed, GameClock time) to all clients.
+        /// Called periodically by the host (every TIME_SYNC_INTERVAL seconds).
+        /// </summary>
+        private void SendTimeSync()
+        {
+            if (!MultiplayerState.IsHost) return;
+            if (SpeedControlScreen.Instance == null) return;
+
+            // Get pauseCount via reflection (it's a private field)
+            int pauseCount = 0;
+            if (_pauseCountField == null)
+            {
+                _pauseCountField = typeof(SpeedControlScreen).GetField("pauseCount",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            }
+            if (_pauseCountField != null)
+            {
+                pauseCount = (int)_pauseCountField.GetValue(SpeedControlScreen.Instance);
+            }
+
+            // Get current speed
+            int speed = SpeedControlScreen.Instance.IsPaused ? 0 : 
+                (int)typeof(SpeedControlScreen).GetField("speed", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.GetValue(SpeedControlScreen.Instance);
+
+            // Get GameClock time
+            float gameTime = 0f;
+            int cycle = 0;
+            float timeSinceStartOfCycle = 0f;
+            if (GameClock.Instance != null)
+            {
+                gameTime = GameClock.Instance.GetTime();
+                cycle = GameClock.Instance.GetCycle();
+                timeSinceStartOfCycle = GameClock.Instance.GetTimeSinceStartOfCycle();
+            }
+
+            var cmd = new Antigravity.Core.Commands.TimeSyncCommand
+            {
+                PauseCount = pauseCount,
+                Speed = speed,
+                GameTime = gameTime,
+                Cycle = cycle,
+                TimeSinceStartOfCycle = timeSinceStartOfCycle
+            };
+
+            CommandManager.SendCommand(cmd);
+        }
+
+        #endregion
     }
 }
